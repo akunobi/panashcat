@@ -118,7 +118,7 @@
       padding: var(--spacing-unit) * 1.5; flex-grow: 1; overflow-y: auto;
     }
 
-    /* Burbujas de Chat (Sin cambios) */
+    /* Burbujas de Chat */
     #messages li {
       padding: var(--spacing-unit) 1rem; margin-bottom: var(--spacing-unit);
       border-radius: var(--border-radius); max-width: 70%;
@@ -139,11 +139,20 @@
       opacity: 0.7;
       text-shadow: none;
     }
+
+    /* --- ¡CAMBIO AQUÍ! --- */
     #messages li.system {
-      background-color: transparent; color: var(--text-dim);
-      font-style: italic; font-size: 0.9rem; text-align: center;
-      float: none; max-width: 100%; border: none;
+      background-color: transparent;
+      color: #ffffff; /* Color blanco */
+      text-shadow: 0 0 4px #ffffff, 0 0 8px #ffffff; /* Efecto neón blanco */
+      font-style: italic;
+      font-size: 0.9rem;
+      text-align: center;
+      float: none;
+      max-width: 100%;
+      border: none;
     }
+    
     li[data-user="Hugo" i] {
       background-color: var(--user-hugo-bubble);
       color: var(--text-on-dark-bubble);
@@ -228,29 +237,22 @@
       margin: 0;
     }
     #user-list-ul li {
-      /* --- ¡CAMBIOS AQUÍ! --- */
+      /* --- ¡CAMBIO AQUÍ! --- */
       padding: var(--spacing-unit) * 1.5 var(--spacing-unit);
       margin-bottom: var(--spacing-unit) / 2;
-      border-radius: 30px; /* ¡Más redondez! */
+      border-radius: var(--border-radius); /* Vuelve a 16px */
       font-size: 1.2rem;
       border: 1px solid rgba(58, 64, 77, 0.3);
       background-color: rgba(255, 255, 255, 0.08);
       color: var(--text-main);
-      transition: all 0.2s ease; /* Transición mantenida */
+      transition: all 0.2s ease;
     }
     #user-list-ul li:last-child {
       border-bottom: none;
       margin-bottom: 0;
     }
     
-    /* --- ¡EFECTO HOVER ELIMINADO! --- */
-    /*
-    #user-list-ul li:hover {
-        background-color: rgba(0, 240, 255, 0.15);
-        border-color: var(--accent-bright);
-        transform: scale(1.02);
-    }
-    */
+    /* (Efecto hover eliminado) */
     
     /* Colores de nombres (Sin cambios) */
     #user-list-ul li[data-user="Hugo" i] {
