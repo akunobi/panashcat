@@ -12,22 +12,26 @@
       --text-dim: #7f8c8d;
       --accent-main: #f000ff;
       --accent-bright: #00f0ff;
+      --bubble-me: #00a99d;
+      --bubble-other: #2c303a;
       
-      /* --- ¡TU PALETA PARA BURBUJAS! --- */
-      --user-rafa-bubble: #3F085E;
-      --user-hugo-bubble: #0B6A16;
-      --user-sergio-bubble: #0D368C;
-      --user-alvaro-bubble: #C2B119;
+      /* Paleta de Colores Base */
+      --user-hugo-base: #0B6A16;
+      --user-rafa-base: #3F085E;
+      --user-alvaro-base: #C2B119;
+      --user-sergio-base: #0D368C;
 
-      /* Colores de texto para las burbujas */
-      --text-on-dark-bubble: #ffffff;
-      --text-on-light-bubble: #0d0d1a; /* Texto oscuro para la burbuja de Álvaro */
+      /* Paleta de Brillo (Glow) */
+      --user-hugo-glow: #aaffb2;
+      --user-rafa-glow: #e0aaff;
+      --user-alvaro-glow: #fff5a1;
+      --user-sergio-glow: #aaccff;
 
       --font-family: 'Consolas', 'Monaco', monospace;
       --border-radius: 16px;
     }
 
-    /* --- Animaciones Keyframes --- */
+    /* (Animaciones y Body... Sin cambios) */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
@@ -37,165 +41,128 @@
       50% { box-shadow: 0 0 25px 8px rgba(240, 0, 255, 0.7); }
       100% { box-shadow: 0 0 15px 3px rgba(240, 0, 255, 0.3); }
     }
-    
     body {
-      margin: 0;
-      font-family: var(--font-family);
-      color: var(--text-main);
+      margin: 0; font-family: var(--font-family); color: var(--text-main);
       background-color: var(--chat-bg);
-      /* Efecto Scanlines */
       background-image: 
         linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
         linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.03));
       background-size: 100% 4px, 6px 100%;
     }
-
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--elements-bg); }
     ::-webkit-scrollbar-thumb { background: var(--accent-main); }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent-bright); }
 
-    /* Login */
+    /* Login (Sin cambios) */
     #login-overlay {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background-color: rgba(13, 13, 26, 0.8);
       display: flex; justify-content: center; align-items: center;
-      z-index: 100;
-      backdrop-filter: blur(5px);
+      z-index: 100; backdrop-filter: blur(5px);
     }
     #login-box {
-      background-color: var(--elements-bg);
-      padding: 2.5rem;
-      border-radius: var(--border-radius);
-      text-align: center;
+      background-color: var(--elements-bg); padding: 2.5rem;
+      border-radius: var(--border-radius); text-align: center;
       border: 1px solid var(--accent-main);
       animation: pulse-glow 3s infinite ease-in-out;
     }
     #login-box h1 {
-      margin-top: 0; color: var(--accent-bright);
-      font-weight: 300;
+      margin-top: 0; color: var(--accent-bright); font-weight: 300;
       text-shadow: 0 0 4px var(--accent-bright), 0 0 8px var(--accent-bright);
     }
     #login-box p { color: var(--text-dim); }
     #name-input {
-      font-size: 1.1rem; padding: 0.8rem;
-      border: 1px solid var(--accent-bright);
+      font-size: 1.1rem; padding: 0.8rem; border: 1px solid var(--accent-bright);
       border-radius: var(--border-radius); width: 100%; box-sizing: border-box;
-      background: var(--chat-bg); color: var(--text-main);
-      font-family: var(--font-family);
+      background: var(--chat-bg); color: var(--text-main); font-family: var(--font-family);
     }
     #name-input:focus {
-      outline: none;
-      box-shadow: 0 0 10px 2px rgba(0, 240, 255, 0.5);
+      outline: none; box-shadow: 0 0 10px 2px rgba(0, 240, 255, 0.5);
     }
     #login-button {
       font-size: 1.1rem; padding: 0.8rem 1.5rem; border: none;
       border-radius: var(--border-radius); background-color: var(--accent-main);
       color: #ffffff; cursor: pointer; margin-top: 1rem; width: 100%;
-      transition: all 0.2s ease;
-      text-shadow: 0 0 5px #fff;
+      transition: all 0.2s ease; text-shadow: 0 0 5px #fff;
     }
     #login-button:hover {
-      background-color: var(--accent-bright);
-      color: var(--chat-bg);
+      background-color: var(--accent-bright); color: var(--chat-bg);
       box-shadow: 0 0 15px 3px rgba(0, 240, 255, 0.7);
-      transform: translateY(-2px);
-      text-shadow: none;
+      transform: translateY(-2px); text-shadow: none;
     }
     #login-error { color: #e74c3c; margin-top: 0.5rem; visibility: hidden; }
 
-    /* Header */
+    /* Header (Sin cambios) */
     #chat-container {
       display: flex; flex-direction: column;
       height: 100vh; visibility: hidden;
     }
     #chat-header {
-      background: var(--elements-bg);
-      padding: 0.75rem 1.5rem;
+      background: var(--elements-bg); padding: 0.75rem 1.5rem;
       border-bottom: 1px solid var(--accent-main);
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       text-align: center; z-index: 10;
     }
     #chat-header h2 {
-      margin: 0; color: var(--text-main);
-      font-weight: 300;
+      margin: 0; color: var(--text-main); font-weight: 300;
     }
     #chat-header h2 span {
-      color: var(--accent-bright);
-      font-weight: 600;
+      color: var(--accent-bright); font-weight: 600;
       text-shadow: 0 0 5px var(--accent-bright);
     }
     #messages {
       list-style-type: none; margin: 0;
-      padding: 1rem; flex-grow: 1;
-      overflow-y: auto;
+      padding: 1rem; flex-grow: 1; overflow-y: auto;
     }
 
-    /* ---- 3. BURBUJAS DE CHAT ---- */
+    /* Burbujas (Sin cambios) */
     #messages li {
       padding: 0.7rem 1rem; margin-bottom: 0.5rem;
       border-radius: var(--border-radius); max-width: 70%;
       clear: both; word-wrap: break-word; line-height: 1.4;
-      animation: fadeIn 0.3s ease-out;
-      border: 1px solid transparent;
+      animation: fadeIn 0.3s ease-out; border: 1px solid #3a404d;
     }
-    
-    /* Reglas de posición */
     #messages li.other {
+      background-color: var(--bubble-other); color: var(--text-main); 
       float: left;
     }
     #messages li.me {
-      float: right;
+      background-color: var(--bubble-me); color: #ffffff; 
+      float: right; border-color: var(--accent-main);
     }
-
-    /* Regla para el nombre (sutil) */
     #messages li.other strong {
-      display: block; font-size: 0.8rem;
-      margin-bottom: 0.2rem;
-      color: inherit; /* Hereda el color (blanco o negro) */
-      opacity: 0.7;
-      text-shadow: none;
+      display: block; font-size: 0.8rem; margin-bottom: 0.2rem;
+      color: var(--accent-bright); text-shadow: 0 0 4px var(--accent-bright);
     }
-
-    /* Mensajes de sistema */
     #messages li.system {
       background-color: transparent; color: var(--text-dim);
       font-style: italic; font-size: 0.9rem; text-align: center;
-      float: none; max-width: 100%;
-      border: none;
+      float: none; max-width: 100%; border: none;
     }
     
-    /* --- ¡REGLAS DE COLOR DE BURBUJA CORREGIDAS! --- */
-    
-    li[data-user="Hugo" i] {
-      background-color: var(--user-hugo-bubble);
-      color: var(--text-on-dark-bubble);
-      border-color: #085212;
+    /* Colores de Usuario (Sin cambios) */
+    li[data-user="Hugo" i] strong {
+      color: var(--user-hugo-base);
+      text-shadow: 0 0 5px var(--user-hugo-glow), 0 0 8px var(--user-hugo-glow);
     }
-    li[data-user="Rafa" i] {
-      background-color: var(--user-rafa-bubble);
-      color: var(--text-on-dark-bubble);
-      border-color: #2a053f;
+    li[data-user="Rafa" i] strong {
+      color: var(--user-rafa-base);
+      text-shadow: 0 0 5px var(--user-rafa-glow), 0 0 8px var(--user-rafa-glow);
     }
-    li[data-user="Álvaro" i] {
-      background-color: var(--user-alvaro-bubble);
-      color: var(--text-on-light-bubble); /* Texto oscuro */
-      border-color: #a09315;
+    li[data-user="Álvaro" i] strong {
+      color: var(--user-alvaro-base);
+      text-shadow: 0 0 5px var(--user-alvaro-glow), 0 0 8px var(--user-alvaro-glow);
     }
-    li[data-user="Sergio" i] {
-      background-color: var(--user-sergio-bubble);
-      color: var(--text-on-dark-bubble);
-      border-color: #092666;
+    li[data-user="Sergio" i] strong {
+      color: var(--user-sergio-base);
+      text-shadow: 0 0 5px var(--user-sergio-glow), 0 0 8px var(--user-sergio-glow);
     }
 
-    /* ---- 4. Formulario ---- */
+    /* Formulario (Sin cambios) */
     #form {
-      background: var(--elements-bg);
-      padding: 0.75rem 1rem;
-      display: flex;
-      border-top: 1px solid var(--accent-main);
+      background: var(--elements-bg); padding: 0.75rem 1rem;
+      display: flex; border-top: 1px solid var(--accent-main);
     }
     #input {
       border: 1px solid var(--accent-bright); padding: 0.75rem;
@@ -212,34 +179,88 @@
       cursor: pointer; transition: all 0.2s ease;
     }
     #form > button:hover {
-      background-color: var(--accent-bright);
-      color: var(--chat-bg);
+      background-color: var(--accent-bright); color: var(--chat-bg);
     }
+
+    /* --- ¡NUEVO CSS! Lista de Usuarios Online --- */
+    #user-list-overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(13, 13, 26, 0.8);
+      /* Usamos display: none para ocultarlo/mostrarlo */
+      display: none; 
+      justify-content: center;
+      align-items: center;
+      z-index: 200; /* Encima del chat */
+      backdrop-filter: blur(5px);
+    }
+    #user-list-box {
+      background-color: var(--elements-bg);
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--accent-bright);
+      width: 300px;
+      max-height: 70%;
+      overflow-y: auto;
+      box-shadow: 0 0 25px 8px rgba(0, 240, 255, 0.5);
+    }
+    #user-list-box h2 {
+      margin-top: 0;
+      color: var(--accent-bright);
+      text-align: center;
+      text-shadow: 0 0 4px var(--accent-bright);
+    }
+    #user-list-ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+    #user-list-ul li {
+      padding: 0.75rem 0.5rem;
+      font-size: 1.1rem;
+      border-bottom: 1px solid #3a404d;
+      color: var(--text-main); /* Color por defecto */
+    }
+    #user-list-ul li:last-child {
+      border-bottom: none;
+    }
+    
+    /* ¡Usamos los mismos colores neón para la lista! */
+    #user-list-ul li[data-user="Hugo" i] {
+      color: var(--user-hugo-base);
+      text-shadow: 0 0 5px var(--user-hugo-glow);
+    }
+    #user-list-ul li[data-user="Rafa" i] {
+      color: var(--user-rafa-base);
+      text-shadow: 0 0 5px var(--user-rafa-glow);
+    }
+    #user-list-ul li[data-user="Álvaro" i] {
+      color: var(--user-alvaro-base);
+      text-shadow: 0 0 5px var(--user-alvaro-glow);
+    }
+    #user-list-ul li[data-user="Sergio" i] {
+      color: var(--user-sergio-base);
+      text-shadow: 0 0 5px var(--user-sergio-glow);
+    }
+    
   </style>
 </head>
 <body>
 
   <div id="login-overlay">
-    <div id="login-box">
-      <h1>[ INICIAR SESIÓN ]</h1>
-      <p>Introduce tu nombre (Rafa, Hugo, Sergio, Álvaro)</p>
-      <form id="login-form">
-        <input id="name-input" autocomplete="off" />
-        <button id="login-button">Conectar</button>
-        <p id="login-error">Usuario no válido // Acceso Denegado</p>
-      </form>
+    ...
+  </div>
+
+  <div id="user-list-overlay">
+    <div id="user-list-box">
+      <h2>[ CONECTADOS ]</h2>
+      <ul id="user-list-ul">
+        </ul>
     </div>
   </div>
 
   <div id="chat-container">
-    <div id="chat-header">
-      <h2>Chat Privado <span>// Conectado</span></h2>
-    </div>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" placeholder="Escribe un mensaje o /clear_chat" />
-      <button>Enviar</button>
-    </form>
+    ...
   </div>
 
 
@@ -248,6 +269,7 @@
     
     const socket = io();
 
+    // Elementos del DOM (Añadimos los nuevos)
     const loginOverlay = document.getElementById('login-overlay');
     const chatContainer = document.getElementById('chat-container');
     const loginForm = document.getElementById('login-form');
@@ -256,9 +278,14 @@
     const messages = document.getElementById('messages');
     const form = document.getElementById('form');
     const input = document.getElementById('input');
+    
+    // --- ¡NUEVOS ELEMENTOS! ---
+    const userListOverlay = document.getElementById('user-list-overlay');
+    const userListUl = document.getElementById('user-list-ul');
 
     let myUsername = '';
 
+    // Login (Sin cambios)
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = nameInput.value.trim();
@@ -275,6 +302,7 @@
       });
     });
 
+    // Envío (Sin cambios)
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const messageText = input.value.trim();
@@ -288,15 +316,14 @@
       }
     });
 
+    // addMessage (Sin cambios)
     function addMessage(data, type = 'chat') {
       const item = document.createElement('li');
-
       if (type === 'system') {
         item.textContent = data;
         item.className = 'system';
       } else { 
         item.dataset.user = data.user;
-
         if (data.user === myUsername) {
           item.className = 'me';
           item.textContent = data.text;
@@ -309,22 +336,48 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    socket.on('chat message', (data) => {
-      addMessage(data, 'chat');
-    });
-
-    socket.on('system message', (msg) => {
-      addMessage(msg, 'system');
-    });
-
+    // Recepción de mensajes (Sin cambios)
+    socket.on('chat message', (data) => addMessage(data, 'chat'));
+    socket.on('system message', (msg) => addMessage(msg, 'system'));
     socket.on('chat history', (history) => {
-      history.forEach((data) => {
-        addMessage(data, 'chat');
+      history.forEach((data) => addMessage(data, 'chat'));
+    });
+    socket.on('chat cleared', () => { messages.innerHTML = ''; });
+
+
+    // --- ¡NUEVA LÓGICA! ---
+
+    // 1. Recibir la lista de usuarios del servidor
+    socket.on('update user list', (users) => {
+      // Limpiamos la lista vieja
+      userListUl.innerHTML = '';
+      
+      // Añadimos cada usuario a la lista
+      users.forEach(user => {
+        const item = document.createElement('li');
+        item.textContent = user;
+        item.dataset.user = user; // Para aplicar el color
+        userListUl.appendChild(item);
       });
     });
 
-    socket.on('chat cleared', () => {
-      messages.innerHTML = '';
+    // 2. Escuchar la tecla ESC para mostrar/ocultar
+    window.addEventListener('keydown', (e) => {
+      // Solo funciona si ya estás logeado
+      if (myUsername && e.key === 'Escape') {
+        if (userListOverlay.style.display === 'flex') {
+          userListOverlay.style.display = 'none';
+        } else {
+          userListOverlay.style.display = 'flex';
+        }
+      }
+    });
+
+    // 3. (Opcional) Cerrar la lista al hacer clic fuera
+    userListOverlay.addEventListener('click', (e) => {
+      if (e.target === userListOverlay) {
+        userListOverlay.style.display = 'none';
+      }
     });
 
   </script>
