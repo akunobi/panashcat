@@ -139,12 +139,10 @@
       opacity: 0.7;
       text-shadow: none;
     }
-
-    /* --- ¡CAMBIO AQUÍ! --- */
     #messages li.system {
       background-color: transparent;
-      color: #ffffff; /* Color blanco */
-      text-shadow: 0 0 4px #ffffff, 0 0 8px #ffffff; /* Efecto neón blanco */
+      color: #ffffff;
+      text-shadow: 0 0 4px #ffffff, 0 0 8px #ffffff;
       font-style: italic;
       font-size: 0.9rem;
       text-align: center;
@@ -152,7 +150,6 @@
       max-width: 100%;
       border: none;
     }
-    
     li[data-user="Hugo" i] {
       background-color: var(--user-hugo-bubble);
       color: var(--text-on-dark-bubble);
@@ -237,11 +234,11 @@
       margin: 0;
     }
     #user-list-ul li {
-      /* --- ¡CAMBIO AQUÍ! --- */
       padding: var(--spacing-unit) * 1.5 var(--spacing-unit);
       margin-bottom: var(--spacing-unit) / 2;
       border-radius: var(--border-radius); /* Vuelve a 16px */
       font-size: 1.2rem;
+      text-align: center; /* --- ¡CAMBIO AQUÍ! --- */
       border: 1px solid rgba(58, 64, 77, 0.3);
       background-color: rgba(255, 255, 255, 0.08);
       color: var(--text-main);
@@ -280,7 +277,7 @@
       <h1>[ INICIAR SESIÓN ]</h1>
       <p>Introduce tu nombre (Rafa, Hugo, Sergio, Álvaro)</p>
       <form id="login-form">
-        <input id="name-input" autocomplete="off" />
+        <input id="name-input" autocomplete="off" autofocus />
         <button id="login-button">Conectar</button>
         <p id="login-error">Usuario no válido // Acceso Denegado</p>
       </form>
@@ -339,7 +336,7 @@
           myUsername = name;
           loginOverlay.style.visibility = 'hidden';
           chatContainer.style.visibility = 'visible';
-          input.focus();
+          input.focus(); // Esto ya estaba, y es correcto
         } else {
           loginError.style.visibility = 'visible';
         }
@@ -356,6 +353,7 @@
           socket.emit('chat message', messageText);
         }
         input.value = '';
+        input.focus(); // --- ¡CAMBIO AQUÍ! ---
       }
     });
 
