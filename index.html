@@ -12,16 +12,18 @@
       --text-dim: #7f8c8d;
       --accent-main: #f000ff;
       --accent-bright: #00f0ff;
-      --bubble-me: #00a99d;
-      --bubble-other: #2c303a;
       
-      /* Paleta de Colores Base */
-      --user-hugo-base: #0B6A16;
-      --user-rafa-base: #3F085E;
-      --user-alvaro-base: #C2B119;
-      --user-sergio-base: #0D368C;
+      /* --- ¡TU PALETA PARA BURBUJAS! --- */
+      --user-rafa-bubble: #3F085E;
+      --user-hugo-bubble: #0B6A16;
+      --user-sergio-bubble: #0D368C;
+      --user-alvaro-bubble: #C2B119;
 
-      /* Paleta de Brillo (Glow) */
+      /* Colores de texto para las burbujas */
+      --text-on-dark-bubble: #ffffff;
+      --text-on-light-bubble: #0d0d1a; /* Texto oscuro para la burbuja de Álvaro */
+
+      /* Colores Neón (para lista de usuarios) */
       --user-hugo-glow: #aaffb2;
       --user-rafa-glow: #e0aaff;
       --user-alvaro-glow: #fff5a1;
@@ -116,50 +118,63 @@
       padding: 1rem; flex-grow: 1; overflow-y: auto;
     }
 
-    /* Burbujas (Sin cambios) */
+    /* ---- 3. BURBUJAS DE CHAT (¡CAMBIOS AQUÍ!) ---- */
     #messages li {
       padding: 0.7rem 1rem; margin-bottom: 0.5rem;
       border-radius: var(--border-radius); max-width: 70%;
       clear: both; word-wrap: break-word; line-height: 1.4;
-      animation: fadeIn 0.3s ease-out; border: 1px solid #3a404d;
+      animation: fadeIn 0.3s ease-out;
+      border: 1px solid transparent; /* Sin borde por defecto */
     }
+    
+    /* Reglas de posición (SIN color de fondo) */
     #messages li.other {
-      background-color: var(--bubble-other); color: var(--text-main); 
       float: left;
     }
     #messages li.me {
-      background-color: var(--bubble-me); color: #ffffff; 
-      float: right; border-color: var(--accent-main);
+      float: right;
     }
+
+    /* Regla para el nombre (sutil, hereda color) */
     #messages li.other strong {
-      display: block; font-size: 0.8rem; margin-bottom: 0.2rem;
-      color: var(--accent-bright); text-shadow: 0 0 4px var(--accent-bright);
+      display: block; font-size: 0.8rem;
+      margin-bottom: 0.2rem;
+      color: inherit; /* Hereda el color de la burbuja */
+      opacity: 0.7; /* Más sutil que el texto */
+      text-shadow: none;
     }
+
+    /* Mensajes de sistema (Sin cambios) */
     #messages li.system {
       background-color: transparent; color: var(--text-dim);
       font-style: italic; font-size: 0.9rem; text-align: center;
       float: none; max-width: 100%; border: none;
     }
     
-    /* Colores de Usuario (Sin cambios) */
-    li[data-user="Hugo" i] strong {
-      color: var(--user-hugo-base);
-      text-shadow: 0 0 5px var(--user-hugo-glow), 0 0 8px var(--user-hugo-glow);
+    /* --- ¡REGLAS DE COLOR DE BURBUJA! --- */
+    
+    li[data-user="Hugo" i] {
+      background-color: var(--user-hugo-bubble);
+      color: var(--text-on-dark-bubble);
+      border-color: #085212;
     }
-    li[data-user="Rafa" i] strong {
-      color: var(--user-rafa-base);
-      text-shadow: 0 0 5px var(--user-rafa-glow), 0 0 8px var(--user-rafa-glow);
+    li[data-user="Rafa" i] {
+      background-color: var(--user-rafa-bubble);
+      color: var(--text-on-dark-bubble);
+      border-color: #2a053f;
     }
-    li[data-user="Álvaro" i] strong {
-      color: var(--user-alvaro-base);
-      text-shadow: 0 0 5px var(--user-alvaro-glow), 0 0 8px var(--user-alvaro-glow);
+    li[data-user="Álvaro" i] {
+      background-color: var(--user-alvaro-bubble);
+      color: var(--text-on-light-bubble); /* Texto oscuro */
+      border-color: #a09315;
     }
-    li[data-user="Sergio" i] strong {
-      color: var(--user-sergio-base);
-      text-shadow: 0 0 5px var(--user-sergio-glow), 0 0 8px var(--user-sergio-glow);
+    li[data-user="Sergio" i] {
+      background-color: var(--user-sergio-bubble);
+      color: var(--text-on-dark-bubble);
+      border-color: #092666;
     }
 
-    /* Formulario (Sin cambios) */
+    /* ---- 4. Formulario (Sin cambios) ---- */
     #form {
       background: var(--elements-bg); padding: 0.75rem 1rem;
       display: flex; border-top: 1px solid var(--accent-main);
@@ -182,7 +197,7 @@
       background-color: var(--accent-bright); color: var(--chat-bg);
     }
 
-    /* Lista de Usuarios Online (Sin cambios) */
+    /* --- Lista de Usuarios Online (Sin cambios) --- */
     #user-list-overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -280,10 +295,11 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     
-    // --- ¡CAMBIO AQUÍ! ---
-    // Forzamos al cliente a usar solo WebSockets
-    const socket = io({ transports: ['websocket'] });
-    // --- Fin del cambio ---
+    // --- ¡EL FIX DE RENDER! ---
+    const socket = io({ 
+      transports: ['websocket'], 
+      upgrade: false 
+    });
 
     // (El resto del script es idéntico)
     const loginOverlay = document.getElementById('login-overlay');
@@ -329,17 +345,22 @@
       }
     });
 
+    // ¡ESTA FUNCIÓN ES LA CLAVE!
     function addMessage(data, type = 'chat') {
       const item = document.createElement('li');
       if (type === 'system') {
         item.textContent = data;
         item.className = 'system';
       } else { 
+        // 1. Pone el data-user (para el color de burbuja)
         item.dataset.user = data.user;
+
         if (data.user === myUsername) {
+          // 2. Si soy yo, me alinea a la derecha
           item.className = 'me';
           item.textContent = data.text;
         } else {
+          // 3. Si es otro, me alinea a la izquierda y pone el nombre
           item.className = 'other';
           item.innerHTML = `<strong>${data.user}</strong>${data.text}`;
         }
