@@ -8,13 +8,16 @@ const { Pool } = require('pg');
 // ---- Configuración Inicial ----
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// --- ¡CAMBIO AQUÍ! ---
+// Forzamos a que solo acepte WebSockets
+const io = new Server(server, { transports: ['websocket'] });
+// --- Fin del cambio ---
+
 const PORT = process.env.PORT || 3000; 
 
 // ---- Lista de usuarios permitidos ----
 const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Álvaro'];
-
-// ---- ¡NUEVO! Lista de usuarios en línea ----
 const onlineUsers = new Set();
 
 // ---- Configuración de Base de Datos (PostgreSQL) ----
@@ -55,25 +58,16 @@ app.get('/', (req, res) => {
 
 // ---- Lógica del Chat (Socket.IO) ----
 io.on('connection', (socket) => {
-  console.log('Un cliente está intentando conectarse...');
+  console.log('✅ Un cliente se ha conectado (WebSocket).'); // Mensaje cambiado para confirmación
 
-  // 1. Evento de Login (¡Modificado!)
+  // 1. Evento de Login (Sin cambios)
   socket.on('login', async (username, callback) => {
     if (allowedUsers.includes(username)) {
       socket.username = username;
       callback(true);
-      console.log(`✅ ${username} se ha conectado.`);
-
-      // --- ¡CAMBIO AQUÍ! ---
-      // 1. Añadir al usuario a la lista de conectados
       onlineUsers.add(username);
-      // 2. Enviar la lista actualizada a TODOS
       io.emit('update user list', Array.from(onlineUsers));
-      // --- Fin del cambio ---
-
       io.emit('system message', `${username} se ha unido.`);
-
-      // (El resto de la carga del historial no cambia)
       try {
         const twoWeeksAgo = Math.floor(Date.now() / 1000) - 1209600;
         const history = await db.query(
@@ -84,7 +78,6 @@ io.on('connection', (socket) => {
       } catch (e) {
         console.error('Error al consultar la DB:', e);
       }
-      
     } else {
       callback(false);
     }
@@ -92,7 +85,6 @@ io.on('connection', (socket) => {
 
   // 2. Evento de Mensaje de Chat (Sin cambios)
   socket.on('chat message', async (msg) => {
-    // (Esta función no cambia)
     if (socket.username) {
       const timestamp = Math.floor(Date.now() / 1000);
       const data = { user: socket.username, text: msg, timestamp: timestamp };
@@ -108,25 +100,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 3. Evento de Desconexión (¡Modificado!)
+  // 3. Evento de Desconexión (Sin cambios)
   socket.on('disconnect', () => {
     if (socket.username) {
       console.log(`❌ ${socket.username} se ha desconectado.`);
-
-      // --- ¡CAMBIO AQUÍ! ---
-      // 1. Quitar al usuario de la lista
       onlineUsers.delete(socket.username);
-      // 2. Enviar la lista actualizada a TODOS
       io.emit('update user list', Array.from(onlineUsers));
-      // --- Fin del cambio ---
-
       io.emit('system message', `${socket.username} se ha marchado.`);
     }
   });
 
   // 4. Evento para Limpiar el Chat (Sin cambios)
   socket.on('clear chat request', async () => {
-    // (Esta función no cambia)
     if (socket.username) {
       console.log(`El usuario ${socket.username} ha solicitado limpiar el chat.`);
       try {

@@ -182,16 +182,15 @@
       background-color: var(--accent-bright); color: var(--chat-bg);
     }
 
-    /* --- ¡NUEVO CSS! Lista de Usuarios Online --- */
+    /* Lista de Usuarios Online (Sin cambios) */
     #user-list-overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       background-color: rgba(13, 13, 26, 0.8);
-      /* Usamos display: none para ocultarlo/mostrarlo */
       display: none; 
       justify-content: center;
       align-items: center;
-      z-index: 200; /* Encima del chat */
+      z-index: 200;
       backdrop-filter: blur(5px);
     }
     #user-list-box {
@@ -219,13 +218,13 @@
       padding: 0.75rem 0.5rem;
       font-size: 1.1rem;
       border-bottom: 1px solid #3a404d;
-      color: var(--text-main); /* Color por defecto */
+      color: var(--text-main);
     }
     #user-list-ul li:last-child {
       border-bottom: none;
     }
     
-    /* ¡Usamos los mismos colores neón para la lista! */
+    /* Colores Lista (Sin cambios) */
     #user-list-ul li[data-user="Hugo" i] {
       color: var(--user-hugo-base);
       text-shadow: 0 0 5px var(--user-hugo-glow);
@@ -242,34 +241,51 @@
       color: var(--user-sergio-base);
       text-shadow: 0 0 5px var(--user-sergio-glow);
     }
-    
   </style>
 </head>
 <body>
 
   <div id="login-overlay">
-    ...
+    <div id="login-box">
+      <h1>[ INICIAR SESIÓN ]</h1>
+      <p>Introduce tu nombre (Rafa, Hugo, Sergio, Álvaro)</p>
+      <form id="login-form">
+        <input id="name-input" autocomplete="off" />
+        <button id="login-button">Conectar</button>
+        <p id="login-error">Usuario no válido // Acceso Denegado</p>
+      </form>
+    </div>
   </div>
 
   <div id="user-list-overlay">
     <div id="user-list-box">
       <h2>[ CONECTADOS ]</h2>
       <ul id="user-list-ul">
-        </ul>
+      </ul>
     </div>
   </div>
 
   <div id="chat-container">
-    ...
+    <div id="chat-header">
+      <h2>Chat Privado <span>// Conectado</span></h2>
+    </div>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" placeholder="Escribe un mensaje o /clear_chat" />
+      <button>Enviar</button>
+    </form>
   </div>
 
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     
-    const socket = io();
+    // --- ¡CAMBIO AQUÍ! ---
+    // Forzamos al cliente a usar solo WebSockets
+    const socket = io({ transports: ['websocket'] });
+    // --- Fin del cambio ---
 
-    // Elementos del DOM (Añadimos los nuevos)
+    // (El resto del script es idéntico)
     const loginOverlay = document.getElementById('login-overlay');
     const chatContainer = document.getElementById('chat-container');
     const loginForm = document.getElementById('login-form');
@@ -279,13 +295,11 @@
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     
-    // --- ¡NUEVOS ELEMENTOS! ---
     const userListOverlay = document.getElementById('user-list-overlay');
     const userListUl = document.getElementById('user-list-ul');
 
     let myUsername = '';
 
-    // Login (Sin cambios)
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = nameInput.value.trim();
@@ -302,7 +316,6 @@
       });
     });
 
-    // Envío (Sin cambios)
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const messageText = input.value.trim();
@@ -316,7 +329,6 @@
       }
     });
 
-    // addMessage (Sin cambios)
     function addMessage(data, type = 'chat') {
       const item = document.createElement('li');
       if (type === 'system') {
@@ -336,7 +348,6 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // Recepción de mensajes (Sin cambios)
     socket.on('chat message', (data) => addMessage(data, 'chat'));
     socket.on('system message', (msg) => addMessage(msg, 'system'));
     socket.on('chat history', (history) => {
@@ -344,26 +355,17 @@
     });
     socket.on('chat cleared', () => { messages.innerHTML = ''; });
 
-
-    // --- ¡NUEVA LÓGICA! ---
-
-    // 1. Recibir la lista de usuarios del servidor
     socket.on('update user list', (users) => {
-      // Limpiamos la lista vieja
       userListUl.innerHTML = '';
-      
-      // Añadimos cada usuario a la lista
       users.forEach(user => {
         const item = document.createElement('li');
         item.textContent = user;
-        item.dataset.user = user; // Para aplicar el color
+        item.dataset.user = user;
         userListUl.appendChild(item);
       });
     });
 
-    // 2. Escuchar la tecla ESC para mostrar/ocultar
     window.addEventListener('keydown', (e) => {
-      // Solo funciona si ya estás logeado
       if (myUsername && e.key === 'Escape') {
         if (userListOverlay.style.display === 'flex') {
           userListOverlay.style.display = 'none';
@@ -373,7 +375,6 @@
       }
     });
 
-    // 3. (Opcional) Cerrar la lista al hacer clic fuera
     userListOverlay.addEventListener('click', (e) => {
       if (e.target === userListOverlay) {
         userListOverlay.style.display = 'none';
