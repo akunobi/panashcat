@@ -8,13 +8,10 @@ const { Pool } = require('pg');
 // ---- Configuración Inicial ----
 const app = express();
 const server = http.createServer(app);
-
-// --- ¡EL FIX DE RENDER! ---
 const io = new Server(server, { 
   transports: ['websocket'], 
   upgrade: false 
 });
-
 const PORT = process.env.PORT || 3000; 
 
 // ---- Listas de usuarios ----
@@ -51,7 +48,12 @@ async function setupDatabase() {
 }
 setupDatabase();
 
-// ---- Servir el HTML ----
+// ---- Servir Archivos ----
+
+// ¡NUEVA LÍNEA! Sirve la carpeta 'images'
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// Sirve el HTML principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -60,7 +62,7 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('✅ Un cliente se ha conectado (WebSocket).');
 
-  // 1. Evento de Login
+  // 1. Evento de Login (Sin cambios)
   socket.on('login', async (username, callback) => {
     if (allowedUsers.includes(username)) {
       socket.username = username;
@@ -82,11 +84,11 @@ io.on('connection', (socket) => {
       }
       
     } else {
-      callback(false);
+      callback(false); // Login fallido
     }
   });
 
-  // 2. Evento de Mensaje de Chat
+  // 2. Evento de Mensaje de Chat (Sin cambios)
   socket.on('chat message', async (msg) => {
     if (socket.username) {
       const timestamp = Math.floor(Date.now() / 1000);
@@ -102,18 +104,37 @@ io.on('connection', (socket) => {
       }
     }
   });
+  
+  // --- ¡NUEVOS EVENTOS DE ESCRITURA! ---
+  // 3. Usuario está escribiendo
+  socket.on('typing', () => {
+    if (socket.username) {
+      // Reenvía a todos MENOS al que escribe
+      socket.broadcast.emit('user typing', socket.username);
+    }
+  });
+  
+  // 4. Usuario ha parado de escribir
+  socket.on('stop typing', () => {
+    if (socket.username) {
+      socket.broadcast.emit('user stop typing', socket.username);
+    }
+  });
+  // --- Fin de nuevos eventos ---
 
-  // 3. Evento de Desconexión
+  // 5. Evento de Desconexión
   socket.on('disconnect', () => {
     if (socket.username) {
       console.log(`❌ ${socket.username} se ha desconectado.`);
       onlineUsers.delete(socket.username);
       io.emit('update user list', Array.from(onlineUsers));
       io.emit('system message', `${socket.username} se ha marchado.`);
+      // Avisa que dejó de escribir al desconectarse
+      socket.broadcast.emit('user stop typing', socket.username);
     }
   });
 
-  // 4. Evento para Limpiar el Chat
+  // 6. Evento para Limpiar el Chat
   socket.on('clear chat request', async () => {
     if (socket.username) {
       console.log(`El usuario ${socket.username} ha solicitado limpiar el chat.`);

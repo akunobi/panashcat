@@ -34,7 +34,7 @@
       --spacing-unit: 0.75rem;
     }
 
-    /* (Animaciones, Body, Scrollbar, Login, Chat... sin cambios) */
+    /* (Animaciones, Body, Scrollbar... sin cambios) */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
@@ -56,6 +56,8 @@
     ::-webkit-scrollbar-track { background: var(--elements-bg); }
     ::-webkit-scrollbar-thumb { background: var(--accent-main); }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent-bright); }
+    
+    /* --- ¡CAMBIOS EN EL LOGIN! --- */
     #login-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background-color: rgba(13, 13, 26, 0.8);
@@ -73,26 +75,45 @@
       text-shadow: 0 0 4px var(--accent-bright), 0 0 8px var(--accent-bright);
     }
     #login-box p { color: var(--text-dim); }
-    #name-input {
-      font-size: 1.1rem; padding: 0.8rem; border: 1px solid var(--accent-bright);
-      border-radius: var(--border-radius); width: 100%; box-sizing: border-box;
-      background: var(--chat-bg); color: var(--text-main); font-family: var(--font-family);
+    
+    /* ¡NUEVO CSS PARA LOGIN VISUAL! */
+    #login-profiles {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 2rem;
     }
-    #name-input:focus {
-      outline: none; box-shadow: 0 0 10px 2px rgba(0, 240, 255, 0.5);
+    .profile-card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s ease-out;
     }
-    #login-button {
-      font-size: 1.1rem; padding: 0.8rem 1.5rem; border: none;
-      border-radius: var(--border-radius); background-color: var(--accent-main);
-      color: #ffffff; cursor: pointer; margin-top: 1rem; width: 100%;
-      transition: all 0.2s ease; text-shadow: 0 0 5px #fff;
+    .profile-card img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%; /* Círculo */
+      border: 3px solid transparent;
+      object-fit: cover;
+      margin-bottom: 0.5rem;
     }
-    #login-button:hover {
-      background-color: var(--accent-bright); color: var(--chat-bg);
-      box-shadow: 0 0 15px 3px rgba(0, 240, 255, 0.7);
-      transform: translateY(-2px); text-shadow: none;
+    .profile-card:hover img {
+      border-color: var(--accent-bright);
+      transform: scale(1.1);
     }
-    #login-error { color: #e74c3c; margin-top: 0.5rem; visibility: hidden; }
+    .profile-card:hover .profile-name {
+      color: var(--accent-bright);
+      text-shadow: 0 0 5px var(--accent-bright);
+    }
+    .profile-name {
+      font-size: 1.1rem;
+      color: var(--text-main);
+      transition: all 0.2s ease-out;
+    }
+    /* ¡FIN DE CAMBIOS EN LOGIN! */
+
+    /* Chat Container (Sin cambios) */
     #chat-container {
       display: flex; flex-direction: column;
       height: 100vh; visibility: hidden;
@@ -122,6 +143,7 @@
       clear: both; word-wrap: break-word; line-height: 1.4;
       animation: fadeIn 0.3s ease-out;
       border: 1px solid transparent;
+      position: relative; /* Para el timestamp */
     }
     #messages li.other {
       float: left;
@@ -168,36 +190,59 @@
       border-color: #092666;
     }
 
-    /* --- ¡CAMBIOS EN EL FORMULARIO! --- */
+    /* --- ¡NUEVO CSS PARA TIMESTAMP! --- */
+    .timestamp {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      opacity: 0.6;
+      display: inline-block;
+      margin-left: 0.5rem;
+      /* Posiciona el timestamp dentro de la burbuja */
+      position: absolute;
+      right: 1rem;
+      bottom: 0.5rem;
+    }
+    /* Ajuste para que el texto no se solape con el timestamp */
+    #messages li.me, #messages li.other {
+      padding-bottom: 1.5rem; /* Más espacio abajo */
+    }
+    #messages li.me .timestamp {
+      color: #ffffff; /* Timestamp blanco en burbujas oscuras */
+    }
+    #messages li.other .timestamp {
+      color: inherit; /* Hereda color de la burbuja */
+      opacity: 0.5;
+    }
+    li[data-user="Álvaro" i] .timestamp {
+        color: var(--text-on-light-bubble); /* Texto oscuro en burbuja clara */
+    }
+
+
+    /* Formulario */
     #form {
       background: var(--elements-bg); 
       padding: var(--spacing-unit) 1rem;
       display: flex; 
       border-top: 1px solid var(--accent-main);
-      align-items: flex-end; /* Alinea botón con el final del textarea */
+      align-items: flex-end;
     }
-    
-    /* ¡NUEVO ESTILO PARA TEXTAREA! */
     #input {
       flex-grow: 1;
       font-size: 1rem;
       background: var(--chat-bg);
       color: var(--text-main);
       font-family: var(--font-family);
-      
       border: 1px solid var(--accent-bright);
       padding: var(--spacing-unit);
       border-radius: var(--border-radius) 0 0 var(--border-radius);
       margin-right: 0;
       border-right: none;
-      
-      resize: none; /* Prevenir que el usuario lo redimensione */
-      overflow-y: auto; /* Scroll si crece mucho */
-      max-height: 150px; /* Límite de altura */
+      resize: none;
+      overflow-y: auto;
+      max-height: 150px;
       line-height: 1.4;
     }
     #input:focus { outline: none; }
-    
     #form > button {
       background: var(--accent-main);
       border: 1px solid var(--accent-main);
@@ -205,47 +250,50 @@
       color: white;
       cursor: pointer;
       transition: all 0.2s ease;
-
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
-      padding: var(--spacing-unit); /* Padding igual al del input */
+      padding: var(--spacing-unit);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0;
-      /* ¡Asegura que el botón mantenga la altura del padding! */
       align-self: stretch;
-      box-sizing: border-box; /* Para que el padding no lo haga más alto */
+      box-sizing: border-box;
       height: auto;
     }
-    
     #form > button:hover {
       background-color: var(--accent-bright);
       border-color: var(--accent-bright);
       color: var(--chat-bg);
     }
     
-    /* --- ¡NUEVO CSS PARA MARKDOWN! --- */
-    /* Estilo para `código` */
+    /* --- ¡NUEVO CSS PARA INDICADOR DE ESCRITURA! --- */
+    #typing-indicator {
+      height: 1.25rem; /* Altura fija para que no salte la UI */
+      padding: 0 1.5rem;
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--text-dim);
+      background: var(--elements-bg);
+    }
+
+    /* Estilos para Markdown */
     code {
       background-color: var(--chat-bg);
       padding: 2px 4px;
       border-radius: 4px;
       font-family: var(--font-family);
     }
-    /* Estilo para ||spoiler|| */
     .spoiler {
       background-color: var(--elements-bg);
-      color: transparent; /* Oculta el texto */
+      color: transparent;
       cursor: pointer;
       border-radius: 4px;
       transition: background-color 0.1s ease-in-out;
     }
-    /* Estilo para el spoiler revelado */
     .spoiler.revealed {
       background-color: transparent;
-      color: inherit; /* Muestra el texto */
+      color: inherit;
     }
-    /* Fin de cambios en el formulario */
 
 
     /* --- Lista de Usuarios Online (Sin cambios) --- */
@@ -325,11 +373,28 @@
   <div id="login-overlay">
     <div id="login-box">
       <h1>[ INICIAR SESIÓN ]</h1>
-      <p>Introduce tu nombre (Rafa, Hugo, Sergio, Álvaro)</p>
-      <form id="login-form">
-        <textarea id="name-input" autocomplete="off" autofocus rows="1"></textarea>
-        <button id="login-button">Conectar</button>
-      </form>
+      <p>Selecciona tu perfil</p>
+      
+      <div id="login-profiles">
+        <div class="profile-card" data-username="Rafa">
+          <img src="/images/Rafa.jpg" alt="Rafa">
+          <div class="profile-name">Rafa</div>
+        </div>
+        <div class="profile-card" data-username="Hugo">
+          <img src="/images/Hugo.jpg" alt="Hugo">
+          <div class="profile-name">Hugo</div>
+        </div>
+        <div class="profile-card" data-username="Sergio">
+          <img src="/images/Sergio.jpg" alt="Sergio">
+          <div class="profile-name">Sergio</div>
+        </div>
+        <div class="profile-card" data-username="Álvaro">
+          <img src="/images/Álvaro.png" alt="Álvaro">
+          <div class="profile-name">Álvaro</div>
+        </div>
+      </div>
+      
+      <p id="login-error">Nombre de usuario no válido // Acceso Denegado</p>
     </div>
   </div>
 
@@ -346,8 +411,11 @@
       <h2>Chat Privado <span>// Conectado</span></h2>
     </div>
     <ul id="messages"></ul>
+    
+    <div id="typing-indicator"></div>
+    
     <form id="form" action="">
-      <textarea id="input" autocomplete="off" placeholder="Escribe un mensaje o /clear_chat" rows="1"></textarea>
+      <textarea id="input" autocomplete="off" placeholder="Escribe un mensaje..." rows="1"></textarea>
       <button>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1rem" height="1rem" fill="currentColor">
           <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -365,26 +433,22 @@
       upgrade: false 
     });
 
-    // (Definiciones de variables sin cambios)
+    // (Definiciones de variables)
     const loginOverlay = document.getElementById('login-overlay');
     const chatContainer = document.getElementById('chat-container');
-    const loginForm = document.getElementById('login-form');
-    const nameInput = document.getElementById('name-input');
     const loginError = document.getElementById('login-error');
     const messages = document.getElementById('messages');
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     const userListOverlay = document.getElementById('user-list-overlay');
     const userListUl = document.getElementById('user-list-ul');
+    const typingIndicator = document.getElementById('typing-indicator');
 
     let myUsername = '';
     let escPressed = false;
 
     // --- ¡NUEVAS FUNCIONES DE PARSEO! ---
 
-    /**
-     * 1. Escapa HTML para prevenir XSS
-     */
     function escapeHTML(str) {
       return str.replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -393,61 +457,55 @@
                 .replace(/'/g, '&#039;');
     }
 
-    /**
-     * 2. Parsea el Markdown estilo Discord
-     */
     function parseDiscordMarkdown(rawText) {
-      // Primero, escapamos CUALQUIER HTML que el usuario haya escrito
       let text = escapeHTML(rawText);
-
-      // Aplicamos el formato (el orden importa un poco)
-      // ||spoiler||
       text = text.replace(/\|\|(.*?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-      // **negrita**
       text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // __subrayado__
       text = text.replace(/__(.*?)__/g, '<u>$1</u>');
-      // ~~tachado~~
       text = text.replace(/~~(.*?)~~/g, '<s>$1</s>');
-      // *cursiva* (después de negrita)
       text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-      // _cursiva_ (después de subrayado)
       text = text.replace(/_(.*?)_/g, '<em>$1</em>');
-      // `código`
       text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-      
-      // Convertir saltos de línea (\n) en <br>
       text = text.replace(/\n/g, '<br>');
-
       return text;
     }
     
-    // --- ¡NUEVA FUNCIÓN DE AUTORESIZE! ---
     function autoResizeTextarea(textarea) {
-        textarea.style.height = 'auto'; // Reinicia la altura
-        textarea.style.height = (textarea.scrollHeight) + 'px'; // Ajusta a la altura del contenido
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+    }
+    
+    // --- ¡NUEVA FUNCIÓN DE TIMESTAMP! ---
+    function formatTimestamp(unixTimestamp) {
+      const date = new Date(unixTimestamp * 1000); // JS usa milisegundos
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
     }
 
-    // --- ¡EVENTOS MODIFICADOS! ---
+    // --- ¡NUEVA LÓGICA DE LOGIN! ---
+    // (Se elimina el 'loginForm.addEventListener')
+    
+    document.querySelectorAll('.profile-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const name = e.currentTarget.dataset.username;
+        if (!name) return;
 
-    // Evento de Login (Sin cambios)
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = nameInput.value.trim();
-      if (!name) return;
-      socket.emit('login', name, (success) => {
-        if (success) {
-          myUsername = name;
-          loginOverlay.style.visibility = 'hidden';
-          chatContainer.style.visibility = 'visible';
-          input.focus();
-        } else {
-          loginError.style.visibility = 'visible';
-        }
+        socket.emit('login', name, (success) => {
+          if (success) {
+            myUsername = name;
+            loginOverlay.style.visibility = 'hidden';
+            chatContainer.style.visibility = 'visible';
+            input.focus();
+          } else {
+            loginError.style.visibility = 'visible';
+          }
+        });
       });
     });
 
-    // Función para enviar el mensaje (separada)
+    // --- ¡LÓGICA DE FORMULARIO MODIFICADA! ---
+    
     function sendMessage() {
       const messageText = input.value.trim();
       if (messageText) {
@@ -457,38 +515,73 @@
           socket.emit('chat message', messageText);
         }
         input.value = '';
-        autoResizeTextarea(input); // Reinicia la altura
+        autoResizeTextarea(input);
         input.focus();
+        socket.emit('stop typing'); // Avisa que paró de escribir al enviar
       }
     }
 
-    // Evento de clic en el botón de enviar
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       sendMessage();
     });
 
-    // Evento de teclado en el textarea del chat
     input.addEventListener('keydown', (e) => {
-      // Si pulsa Intro Y NO pulsa Shift
       if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault(); // Previene el salto de línea por defecto
+        e.preventDefault();
         sendMessage();
       }
-      // Si pulsa Shift + Intro, el navegador inserta el salto de línea por defecto
     });
     
-    // Evento para auto-redimensionar el textarea
     input.addEventListener('input', () => {
         autoResizeTextarea(input);
     });
 
-    // Evento para auto-redimensionar el textarea del login
-    nameInput.addEventListener('input', () => {
-        autoResizeTextarea(nameInput);
+    // --- ¡NUEVA LÓGICA DE INDICADOR DE ESCRITURA! ---
+    let typingTimer;
+    let isTyping = false;
+    
+    input.addEventListener('input', () => {
+        autoResizeTextarea(input);
+        
+        if (!isTyping) {
+            isTyping = true;
+            socket.emit('typing');
+        }
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            isTyping = false;
+            socket.emit('stop typing');
+        }, 2000); // 2 segundos de espera
     });
-
-
+    
+    let typers = new Set();
+    
+    function updateTypingUI() {
+        if (typers.size === 0) {
+            typingIndicator.textContent = '';
+        } else {
+            let names = Array.from(typers);
+            if (names.length === 1) {
+                typingIndicator.textContent = `${names[0]} está escribiendo...`;
+            } else if (names.length === 2) {
+                typingIndicator.textContent = `${names[0]} y ${names[1]} están escribiendo...`;
+            } else {
+                typingIndicator.textContent = `Varios usuarios están escribiendo...`;
+            }
+        }
+    }
+    
+    socket.on('user typing', (username) => {
+        typers.add(username);
+        updateTypingUI();
+    });
+    
+    socket.on('user stop typing', (username) => {
+        typers.delete(username);
+        updateTypingUI();
+    });
+    
     // --- ¡FUNCIÓN 'addMessage' MODIFICADA! ---
     function addMessage(data, type = 'chat') {
       const item = document.createElement('li');
@@ -498,15 +591,16 @@
       } else { 
         item.dataset.user = data.user;
         
-        // ¡Usamos la nueva función de parseo!
         const formattedText = parseDiscordMarkdown(data.text);
+        const time = formatTimestamp(data.timestamp);
 
         if (data.user === myUsername) {
           item.className = 'me';
-          item.innerHTML = formattedText; // Usamos innerHTML para el formato
+          // Añadimos el texto y el timestamp
+          item.innerHTML = `${formattedText} <span class="timestamp">${time}</span>`;
         } else {
           item.className = 'other';
-          item.innerHTML = `<strong>${data.user}</strong>${formattedText}`; // Usamos innerHTML
+          item.innerHTML = `<strong>${data.user}</strong>${formattedText} <span class="timestamp">${time}</span>`;
         }
       }
       messages.appendChild(item);
