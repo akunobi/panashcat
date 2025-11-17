@@ -2,32 +2,38 @@
 <html>
 <head>
   <title>Chat Privado // NEON_TERMINAL</title>
-  <meta name="viewport" content="width=device-width,initial-scale:1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <style>
     :root {
-      /* (Paleta de colores sin cambios) */
+      /* Paleta General */
       --chat-bg: #0d0d1a;
       --elements-bg: #1a1a2e;
       --text-main: #c0c5ce;
       --text-dim: #7f8c8d;
       --accent-main: #f000ff;
       --accent-bright: #00f0ff;
+      
+      /* --- TU PALETA PARA BURBUJAS --- */
       --user-rafa-bubble: #3F085E;
       --user-hugo-bubble: #0B6A16;
       --user-sergio-bubble: #0D368C;
       --user-alvaro-bubble: #C2B119;
+
+      /* Colores de texto para las burbujas */
       --text-on-dark-bubble: #ffffff;
       --text-on-light-bubble: #0d0d1a;
+
+      /* Colores Neón (para lista de usuarios) */
       --user-hugo-glow: #aaffb2;
       --user-rafa-glow: #e0aaff;
       --user-alvaro-glow: #fff5a1;
       --user-sergio-glow: #aaccff;
+
       --font-family: 'Consolas', 'Monaco', monospace;
       --border-radius: 16px;
       --spacing-unit: 0.75rem;
     }
 
-    /* (Animaciones, Body, Scrollbar, Login, Chat... sin cambios) */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
@@ -49,6 +55,8 @@
     ::-webkit-scrollbar-track { background: var(--elements-bg); }
     ::-webkit-scrollbar-thumb { background: var(--accent-main); }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent-bright); }
+    
+    /* --- CSS LOGIN --- */
     #login-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background-color: rgba(13, 13, 26, 0.8);
@@ -100,6 +108,8 @@
       color: var(--text-main);
       transition: all 0.2s ease-out;
     }
+    
+    /* --- CSS CHAT --- */
     #chat-container {
       display: flex; flex-direction: column;
       height: 100vh; visibility: hidden;
@@ -121,19 +131,17 @@
       list-style-type: none; margin: 0;
       padding: var(--spacing-unit) * 1.5; flex-grow: 1; overflow-y: auto;
     }
-
-    /* --- ¡CAMBIOS EN LAS BURBUJAS DE CHAT! --- */
     #messages li {
       max-width: 80%;
       clear: both;
       animation: fadeIn 0.3s ease-out;
       position: relative;
-      /* ¡CAMBIO! 'display: flex' se quita de aquí */
       margin-bottom: var(--spacing-unit) * 1.5;
     }
     
+    /* Contenedor del Mensaje */
     .message-container {
-      display: flex; /* Flexbox para avatar + burbuja */
+      display: flex;
       align-items: center;
       width: 100%;
       position: relative;
@@ -156,10 +164,10 @@
       line-height: 1.4;
       border: 1px solid transparent;
       position: relative;
-      width: 100%; /* Para que la burbuja ocupe el espacio */
+      width: 100%;
     }
-
-    /* Mensajes de OTROS (avatar + burbuja) */
+    
+    /* Burbujas de OTROS */
     #messages li.other {
       float: left;
     }
@@ -171,7 +179,7 @@
       text-shadow: none;
     }
 
-    /* Mensajes MÍOS (burbuja + avatar) */
+    /* Burbujas MÍAS */
     #messages li.me {
       float: right;
     }
@@ -183,7 +191,7 @@
       margin-left: var(--spacing-unit);
     }
 
-    /* Mensajes de sistema (sin cambios) */
+    /* Burbujas de SISTEMA */
     #messages li.system {
       display: block;
       background-color: transparent;
@@ -197,7 +205,7 @@
       border: none;
     }
     
-    /* Colores de burbuja (sin cambios) */
+    /* Colores de Burbujas por Usuario */
     li[data-user="Hugo" i] .message-bubble {
       background-color: var(--user-hugo-bubble);
       color: var(--text-on-dark-bubble);
@@ -219,7 +227,7 @@
       border-color: #092666;
     }
 
-    /* Timestamp (sin cambios) */
+    /* Timestamp */
     .timestamp {
       font-size: 0.7rem;
       color: var(--text-dim);
@@ -241,7 +249,7 @@
         color: var(--text-on-light-bubble);
     }
     
-    /* Botones de Acción (Reply, Delete) (sin cambios) */
+    /* Botones de Acción (Reply, Delete) */
     .message-actions {
       position: absolute;
       top: -15px;
@@ -274,27 +282,27 @@
       color: var(--accent-bright);
     }
     
-    /* --- ¡NUEVO CSS! Referencia de Respuesta (Estilo Discord) --- */
+    /* Referencia de Respuesta (Estilo Discord) */
     .reply-reference {
       font-size: 0.8rem;
       color: var(--text-dim);
-      margin-bottom: 4px; /* Espacio entre referencia y burbuja */
+      margin-bottom: 4px;
       cursor: pointer;
       padding-left: 52px; /* 40px avatar + 12px margin */
     }
     #messages li.me .reply-reference {
       padding-left: 0;
-      padding-right: 52px; /* 40px avatar + 12px margin */
+      padding-right: 52px;
       text-align: right;
     }
     .reply-reference strong {
-      color: var(--text-main); /* Nombre más brillante */
+      color: var(--text-main);
     }
     .reply-reference:hover {
       text-decoration: underline;
     }
     
-    /* ¡NUEVO CSS! Highlight para mensaje respondido */
+    /* Highlight para mensaje respondido */
     @keyframes highlight-fade {
       from { 
         border-color: var(--accent-bright);
@@ -309,8 +317,7 @@
       animation: highlight-fade 1.5s ease-out;
     }
 
-
-    /* Contexto de Respuesta (sin cambios) */
+    /* Contexto de Respuesta (Barra inferior) */
     #reply-context {
       display: none;
       padding: 0.5rem 1.5rem;
@@ -332,8 +339,7 @@
       color: var(--accent-bright);
     }
 
-
-    /* Formulario, Indicador, Markdown, Lista de Usuarios (sin cambios) */
+    /* Formulario de Input */
     #form {
       background: var(--elements-bg); 
       padding: var(--spacing-unit) 1rem;
@@ -364,11 +370,15 @@
       border-color: var(--accent-bright);
       color: var(--chat-bg);
     }
+    
+    /* Indicador de Escritura */
     #typing-indicator {
       height: 1.25rem; padding: 0 1.5rem;
       font-size: 0.8rem; font-style: italic;
       color: var(--text-dim); background: var(--elements-bg);
     }
+
+    /* Estilos Markdown */
     code {
       background-color: var(--chat-bg); padding: 2px 4px;
       border-radius: 4px; font-family: var(--font-family);
@@ -381,6 +391,8 @@
     .spoiler.revealed {
       background-color: transparent; color: inherit;
     }
+    
+    /* Lista de Usuarios Online */
     #user-list-overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -466,6 +478,7 @@
       <p id="login-error">Nombre de usuario no válido // Acceso Denegado</p>
     </div>
   </div>
+
   <div id="user-list-overlay">
     <div id="user-list-box">
       <h2>[ CONECTADOS ]</h2>
@@ -473,6 +486,7 @@
       </ul>
     </div>
   </div>
+
   <div id="chat-container">
     <div id="chat-header">
       <h2>Chat Privado <span>// Conectado</span></h2>
@@ -503,7 +517,7 @@
       upgrade: false 
     });
 
-    // (Definiciones de variables sin cambios)
+    // (Definiciones de variables)
     const loginOverlay = document.getElementById('login-overlay');
     const chatContainer = document.getElementById('chat-container');
     const loginError = document.getElementById('login-error');
@@ -522,7 +536,7 @@
     let escPressed = false;
     let currentReplyToId = null;
 
-    // (Funciones de parseo, resize, timestamp sin cambios)
+    // (Funciones de Parseo y Utilidad)
     function escapeHTML(str) {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
@@ -548,8 +562,11 @@
       const minutes = date.getMinutes().toString().padStart(2, '0');
       return `${hours}:${minutes}`;
     }
+    function getAvatarUrl(username) {
+      return `/images/${username}.png`;
+    }
 
-    // (Login con perfiles sin cambios)
+    // (Lógica de Login)
     document.querySelectorAll('.profile-card').forEach(card => {
       card.addEventListener('click', (e) => {
         const name = e.currentTarget.dataset.username;
@@ -567,7 +584,7 @@
       });
     });
 
-    // (Lógica de formulario y "está escribiendo" sin cambios)
+    // (Lógica de Formulario y "Está Escribiendo")
     function sendMessage() {
       const messageText = input.value.trim();
       if (messageText) {
@@ -637,10 +654,7 @@
         updateTypingUI();
     });
     
-    // (Funciones de Avatar y Reply sin cambios)
-    function getAvatarUrl(username) {
-      return `/images/${username}.png`;
-    }
+    // (Lógica de Respuestas)
     function startReply(messageId) {
       const msgLi = document.getElementById(messageId);
       if (!msgLi) return;
@@ -661,7 +675,6 @@
     }
     closeReplyBtn.addEventListener('click', cancelReply);
 
-
     // --- ¡FUNCIÓN 'addMessage' MODIFICADA! ---
     function addMessage(data, type = 'chat') {
       const item = document.createElement('li');
@@ -676,7 +689,6 @@
         const formattedText = parseDiscordMarkdown(data.text);
         const time = formatTimestamp(data.timestamp);
         
-        // --- ¡CAMBIO! Lógica de respuesta movida ---
         // 1. (¡NUEVO!) Crear el bloque de respuesta si existe
         if (data.reply_to_id) {
           const originalMsg = document.getElementById(`msg-${data.reply_to_id}`);
@@ -686,9 +698,8 @@
             const replyRef = document.createElement('div');
             replyRef.className = 'reply-reference';
             replyRef.innerHTML = `↩️ Respondiendo a <strong>${originalUser}</strong>`;
-            replyRef.dataset.replyId = `msg-${data.reply_to_id}`; // Para el clic
+            replyRef.dataset.replyId = `msg-${data.reply_to_id}`;
             
-            // Añade la referencia al 'li' ANTES del contenedor del mensaje
             item.appendChild(replyRef);
           }
         }
@@ -702,7 +713,7 @@
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
         
-        // 4. Crear el contenido de texto (para el reply)
+        // 4. Crear el contenido de texto
         const textContent = document.createElement('div');
         textContent.className = 'message-text-content';
         
@@ -716,7 +727,7 @@
         }
         bubble.appendChild(textContent);
         
-        // 6. (¡NUEVO!) Crear botones de acción
+        // 6. Crear botones de acción
         const actions = document.createElement('div');
         actions.className = 'message-actions';
         
@@ -749,19 +760,17 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // --- ¡NUEVOS EVENT LISTENERS! ---
+    // --- (Eventos de Socket.IO) ---
     
     // Listener de clic para botones de acción (Delegación de eventos)
     messages.addEventListener('click', (e) => {
-      // 1. Clic en un botón de responder
       const replyBtn = e.target.closest('.reply-btn');
       if (replyBtn) {
         const messageId = replyBtn.dataset.messageId;
         startReply(messageId);
-        return; // Detiene la ejecución
+        return;
       }
       
-      // 2. Clic en un botón de borrar
       const deleteBtn = e.target.closest('.delete-btn');
       if (deleteBtn) {
         const messageId = deleteBtn.dataset.messageId;
@@ -769,10 +778,9 @@
         if (confirm('¿Seguro que quieres borrar este mensaje?')) {
           socket.emit('delete message', msgIdNumber);
         }
-        return; // Detiene la ejecución
+        return;
       }
       
-      // 3. Clic en una referencia de respuesta
       const replyRef = e.target.closest('.reply-reference');
       if (replyRef) {
         const messageId = replyRef.dataset.replyId;
@@ -782,9 +790,9 @@
           originalMsg.classList.add('highlight');
           setTimeout(() => {
             originalMsg.classList.remove('highlight');
-          }, 1500); // 1.5 segundos
+          }, 1500);
         }
-        return; // Detiene la ejecución
+        return;
       }
     });
     
@@ -796,13 +804,15 @@
       }
     });
 
-    // (Resto de eventos sin cambios)
     socket.on('chat message', (data) => addMessage(data, 'chat'));
     socket.on('system message', (msg) => addMessage(msg, 'system'));
     socket.on('chat history', (history) => {
+      messages.innerHTML = ''; // Limpiar historial viejo
       history.forEach((data) => addMessage(data, 'chat'));
     });
-    socket.on('chat cleared', () => { messages.innerHTML = ''; });
+    socket.on('chat cleared', () => { 
+      messages.innerHTML = ''; 
+    });
 
     socket.on('update user list', (users) => {
       userListUl.innerHTML = '';
@@ -814,6 +824,7 @@
       });
     });
 
+    // (Lógica de ESC para lista de usuarios)
     window.addEventListener('keydown', (e) => {
       if (myUsername && e.key === 'Escape' && !escPressed) {
         escPressed = true;

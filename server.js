@@ -29,7 +29,7 @@ const db = new Pool({
 async function setupDatabase() {
   try {
     console.log('Conectando a la base de datos PostgreSQL...');
-    // Creación de la tabla (sin cambios)
+    // Creación/modificación de la tabla
     await db.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -39,14 +39,13 @@ async function setupDatabase() {
       );
     `);
     
-    // --- ¡CAMBIO IMPORTANTE EN LA BASE DE DATOS! ---
-    // Añadimos la columna para respuestas, si no existe
+    // Añadimos la columna para respuestas
     await db.query(`
       ALTER TABLE messages 
       ADD COLUMN IF NOT EXISTS reply_to_id INTEGER
     `);
     
-    // Limpieza de mensajes antiguos (sin cambios)
+    // Limpieza de mensajes antiguos
     const twoWeeksAgo = Math.floor(Date.now() / 1000) - 1209600;
     await db.query(`DELETE FROM messages WHERE timestamp < $1`, [twoWeeksAgo]);
     
@@ -67,7 +66,7 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('✅ Un cliente se ha conectado (WebSocket).');
 
-  // 1. Evento de Login (¡Modificado!)
+  // 1. Evento de Login
   socket.on('login', async (username, callback) => {
     if (allowedUsers.includes(username)) {
       socket.username = username;
@@ -79,7 +78,7 @@ io.on('connection', (socket) => {
 
       try {
         const twoWeeksAgo = Math.floor(Date.now() / 1000) - 1209600;
-        // ¡CAMBIO! Ahora seleccionamos el 'id' y 'reply_to_id'
+        // Seleccionamos todos los datos necesarios
         const history = await db.query(
           `SELECT id, user_name AS "user", text, timestamp, reply_to_id 
            FROM messages 
@@ -97,39 +96,37 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 2. Evento de Mensaje de Chat (¡Modificado!)
-  socket.on('chat message', async (msg, replyToId) => { // Acepta un nuevo parámetro
+  // 2. Evento de Mensaje de Chat
+  socket.on('chat message', async (msg, replyToId) => {
     if (socket.username) {
       const timestamp = Math.floor(Date.now() / 1000);
       
       try {
-        // ¡CAMBIO! Guardamos el reply_to_id y pedimos que nos devuelva el 'id'
         const result = await db.query(
           `INSERT INTO messages (user_name, text, timestamp, reply_to_id) 
            VALUES ($1, $2, $3, $4) 
-           RETURNING id`, // Pide a Postgres que devuelva el ID recién creado
+           RETURNING id`,
           [socket.username, msg, timestamp, replyToId]
         );
 
-        const newId = result.rows[0].id; // Obtenemos el ID único
+        const newId = result.rows[0].id;
 
-        // Creamos el objeto de datos completo para enviar a los clientes
         const data = { 
-          id: newId, // ¡Enviamos el ID!
+          id: newId,
           user: socket.username, 
           text: msg, 
           timestamp: timestamp,
           reply_to_id: replyToId
         };
         
-        io.emit('chat message', data); // Emitimos el objeto completo
+        io.emit('chat message', data);
       } catch (err) {
         console.error('Error al guardar mensaje:', err);
       }
     }
   });
   
-  // 3. Eventos de Escritura (Sin cambios)
+  // 3. Eventos de Escritura
   socket.on('typing', () => {
     if (socket.username) {
       socket.broadcast.emit('user typing', socket.username);
@@ -141,7 +138,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 4. Evento de Desconexión (Sin cambios)
+  // 4. Evento de Desconexión
   socket.on('disconnect', () => {
     if (socket.username) {
       console.log(`❌ ${socket.username} se ha desconectado.`);
@@ -152,23 +149,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  // --- ¡NUEVO EVENTO DE BORRADO! ---
   // 5. Evento para Eliminar un Mensaje
   socket.on('delete message', async (messageId) => {
-    if (!socket.username) return; // No logueado, no puede borrar
+    if (!socket.username) return;
 
     try {
-      // 1. Verificamos que el usuario es el dueño del mensaje
       const msgResult = await db.query(
         `SELECT user_name FROM messages WHERE id = $1`, 
         [messageId]
       );
       
       if (msgResult.rows.length > 0 && msgResult.rows[0].user_name === socket.username) {
-        // 2. Si es el dueño, lo borra
         await db.query(`DELETE FROM messages WHERE id = $1`, [messageId]);
-        
-        // 3. Avisa a todos los clientes que lo borren de la UI
         io.emit('message deleted', messageId);
       }
     } catch (err) {
@@ -176,9 +168,19 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 6. Evento para Limpiar el Chat (Sin cambios)
+  // 6. Evento para Limpiar el Chat
   socket.on('clear chat request', async () => {
-    // ... (sin cambios)
+    if (socket.username) {
+      console.log(`El usuario ${socket.username} ha solicitado limpiar el chat.`);
+      try {
+        await db.query(`DELETE FROM messages`);
+        console.log('Historial de chat borrado.');
+        io.emit('chat cleared'); 
+        io.emit('system message', `${socket.username} ha borrado el historial del chat.`);
+      } catch (err) {
+        console.error('Error al borrar mensajes:', err);
+      }
+    }
   });
 
 });
