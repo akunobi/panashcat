@@ -27,7 +27,7 @@
       --spacing-unit: 0.75rem;
     }
 
-    /* (Animaciones, Body, Scrollbar, Login... sin cambios) */
+    /* (Animaciones, Body, Scrollbar, Login, Chat... sin cambios) */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
@@ -122,50 +122,46 @@
       padding: var(--spacing-unit) * 1.5; flex-grow: 1; overflow-y: auto;
     }
 
-    /* --- ¡GRANDES CAMBIOS EN LAS BURBUJAS DE CHAT! --- */
+    /* --- ¡CAMBIOS EN LAS BURBUJAS DE CHAT! --- */
     #messages li {
-      /* padding/margin/etc. se quitan de aquí */
-      max-width: 80%; /* Un poco más anchas */
+      max-width: 80%;
       clear: both;
       animation: fadeIn 0.3s ease-out;
       position: relative;
-      display: flex; /* Usamos Flexbox */
-      margin-bottom: var(--spacing-unit) * 1.5; /* Más separación */
+      /* ¡CAMBIO! 'display: flex' se quita de aquí */
+      margin-bottom: var(--spacing-unit) * 1.5;
     }
     
-    /* Contenedor de la burbuja y botones */
     .message-container {
-      display: flex;
+      display: flex; /* Flexbox para avatar + burbuja */
       align-items: center;
       width: 100%;
-      position: relative; /* Para los botones de acción */
+      position: relative;
     }
     
-    /* El avatar */
     .avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
       margin-right: var(--spacing-unit);
-      flex-shrink: 0; /* Evita que se encoja */
+      flex-shrink: 0;
     }
     
-    /* La burbuja de texto en sí */
     .message-bubble {
       padding: var(--spacing-unit) 1rem;
-      padding-bottom: 1.5rem; /* Espacio para el timestamp */
+      padding-bottom: 1.5rem;
       border-radius: var(--border-radius);
       word-wrap: break-word;
       line-height: 1.4;
       border: 1px solid transparent;
       position: relative;
+      width: 100%; /* Para que la burbuja ocupe el espacio */
     }
 
     /* Mensajes de OTROS (avatar + burbuja) */
     #messages li.other {
       float: left;
-      justify-content: flex-start;
     }
     #messages li.other .message-bubble strong {
       display: block; font-size: 0.8rem;
@@ -178,10 +174,9 @@
     /* Mensajes MÍOS (burbuja + avatar) */
     #messages li.me {
       float: right;
-      justify-content: flex-end; /* Alinea a la derecha */
     }
     #messages li.me .message-container {
-      flex-direction: row-reverse; /* Invierte el orden */
+      flex-direction: row-reverse;
     }
     #messages li.me .avatar {
       margin-right: 0;
@@ -190,7 +185,7 @@
 
     /* Mensajes de sistema (sin cambios) */
     #messages li.system {
-      display: block; /* Anula el flexbox */
+      display: block;
       background-color: transparent;
       color: #ffffff;
       text-shadow: 0 0 4px #ffffff, 0 0 8px #ffffff;
@@ -246,7 +241,7 @@
         color: var(--text-on-light-bubble);
     }
     
-    /* --- ¡NUEVO CSS! Botones de Acción (Reply, Delete) --- */
+    /* Botones de Acción (Reply, Delete) (sin cambios) */
     .message-actions {
       position: absolute;
       top: -15px;
@@ -255,20 +250,17 @@
       border-radius: 8px;
       border: 1px solid var(--accent-bright);
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-      display: none; /* Oculto por defecto */
+      display: none;
     }
     #messages li:hover .message-actions {
-      display: flex; /* Mostrar al hacer hover */
+      display: flex;
     }
-    
-    /* Posición de los botones */
     #messages li.me:hover .message-actions {
-      right: 50px; /* A la derecha del avatar */
+      right: 50px;
     }
     #messages li.other:hover .message-actions {
-      left: 50px; /* A la derecha del avatar */
+      left: 50px;
     }
-    
     .action-btn {
       background: none;
       border: none;
@@ -276,15 +268,51 @@
       cursor: pointer;
       padding: 4px;
       margin: 0 2px;
-      font-size: 1.1rem; /* Icono más grande */
+      font-size: 1.1rem;
     }
     .action-btn:hover {
       color: var(--accent-bright);
     }
     
-    /* --- ¡NUEVO CSS! Contexto de Respuesta --- */
+    /* --- ¡NUEVO CSS! Referencia de Respuesta (Estilo Discord) --- */
+    .reply-reference {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 4px; /* Espacio entre referencia y burbuja */
+      cursor: pointer;
+      padding-left: 52px; /* 40px avatar + 12px margin */
+    }
+    #messages li.me .reply-reference {
+      padding-left: 0;
+      padding-right: 52px; /* 40px avatar + 12px margin */
+      text-align: right;
+    }
+    .reply-reference strong {
+      color: var(--text-main); /* Nombre más brillante */
+    }
+    .reply-reference:hover {
+      text-decoration: underline;
+    }
+    
+    /* ¡NUEVO CSS! Highlight para mensaje respondido */
+    @keyframes highlight-fade {
+      from { 
+        border-color: var(--accent-bright);
+        box-shadow: 0 0 10px var(--accent-bright);
+      }
+      to {
+        border-color: transparent;
+        box-shadow: none;
+      }
+    }
+    li.highlight .message-bubble {
+      animation: highlight-fade 1.5s ease-out;
+    }
+
+
+    /* Contexto de Respuesta (sin cambios) */
     #reply-context {
-      display: none; /* Oculto por defecto */
+      display: none;
       padding: 0.5rem 1.5rem;
       background-color: var(--chat-bg);
       border-top: 1px solid var(--accent-main);
@@ -305,7 +333,7 @@
     }
 
 
-    /* Formulario (sin cambios) */
+    /* Formulario, Indicador, Markdown, Lista de Usuarios (sin cambios) */
     #form {
       background: var(--elements-bg); 
       padding: var(--spacing-unit) 1rem;
@@ -336,15 +364,11 @@
       border-color: var(--accent-bright);
       color: var(--chat-bg);
     }
-    
-    /* Indicador de escritura (sin cambios) */
     #typing-indicator {
       height: 1.25rem; padding: 0 1.5rem;
       font-size: 0.8rem; font-style: italic;
       color: var(--text-dim); background: var(--elements-bg);
     }
-
-    /* Estilos Markdown (sin cambios) */
     code {
       background-color: var(--chat-bg); padding: 2px 4px;
       border-radius: 4px; font-family: var(--font-family);
@@ -357,8 +381,6 @@
     .spoiler.revealed {
       background-color: transparent; color: inherit;
     }
-
-    /* Lista de Usuarios Online (sin cambios) */
     #user-list-overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -444,7 +466,6 @@
       <p id="login-error">Nombre de usuario no válido // Acceso Denegado</p>
     </div>
   </div>
-
   <div id="user-list-overlay">
     <div id="user-list-box">
       <h2>[ CONECTADOS ]</h2>
@@ -452,21 +473,17 @@
       </ul>
     </div>
   </div>
-
   <div id="chat-container">
     <div id="chat-header">
       <h2>Chat Privado <span>// Conectado</span></h2>
     </div>
     <ul id="messages"></ul>
-    
     <div id="reply-context">
       <span id="close-reply">✖</span>
       Respondiendo a <strong id="reply-context-user"></strong>
       <div id="reply-context-text"></div>
     </div>
-    
     <div id="typing-indicator"></div>
-    
     <form id="form" action="">
       <textarea id="input" autocomplete="off" placeholder="Escribe un mensaje..." rows="1"></textarea>
       <button>
@@ -486,7 +503,7 @@
       upgrade: false 
     });
 
-    // (Definiciones de variables)
+    // (Definiciones de variables sin cambios)
     const loginOverlay = document.getElementById('login-overlay');
     const chatContainer = document.getElementById('chat-container');
     const loginError = document.getElementById('login-error');
@@ -496,8 +513,6 @@
     const userListOverlay = document.getElementById('user-list-overlay');
     const userListUl = document.getElementById('user-list-ul');
     const typingIndicator = document.getElementById('typing-indicator');
-    
-    // --- ¡NUEVAS VARIABLES GLOBALES! ---
     const replyContext = document.getElementById('reply-context');
     const replyContextUser = document.getElementById('reply-context-user');
     const replyContextText = document.getElementById('reply-context-text');
@@ -505,9 +520,9 @@
     
     let myUsername = '';
     let escPressed = false;
-    let currentReplyToId = null; // ID del mensaje al que respondemos
+    let currentReplyToId = null;
 
-    // (Funciones de parseo sin cambios)
+    // (Funciones de parseo, resize, timestamp sin cambios)
     function escapeHTML(str) {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
@@ -552,48 +567,38 @@
       });
     });
 
-    // --- ¡LÓGICA DE FORMULARIO MODIFICADA! ---
-    
+    // (Lógica de formulario y "está escribiendo" sin cambios)
     function sendMessage() {
       const messageText = input.value.trim();
       if (messageText) {
         if (messageText === '/clear_chat') {
           socket.emit('clear chat request');
         } else {
-          // ¡CAMBIO! Enviamos el ID de respuesta
           socket.emit('chat message', messageText, currentReplyToId);
         }
         input.value = '';
         autoResizeTextarea(input);
         input.focus();
         socket.emit('stop typing');
-        
-        // ¡CAMBIO! Limpiamos el contexto de respuesta
         cancelReply();
       }
     }
-
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       sendMessage();
     });
-
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
-      // Si pulsa 'Escape' mientras escribe, cancela la respuesta
       if (e.key === 'Escape' && currentReplyToId) {
         cancelReply();
       }
     });
-    
     input.addEventListener('input', () => {
         autoResizeTextarea(input);
     });
-    
-    // (Lógica de "está escribiendo" sin cambios)
     let typingTimer;
     let isTyping = false;
     input.addEventListener('input', () => {
@@ -632,14 +637,10 @@
         updateTypingUI();
     });
     
-    
-    // --- ¡NUEVA FUNCIÓN! Mapea usuario a archivo de imagen ---
+    // (Funciones de Avatar y Reply sin cambios)
     function getAvatarUrl(username) {
-      // Asumimos que todos son .png como corregimos antes
       return `/images/${username}.png`;
     }
-    
-    // --- ¡NUEVAS FUNCIONES! Para Respuestas ---
     function startReply(messageId) {
       const msgLi = document.getElementById(messageId);
       if (!msgLi) return;
@@ -654,16 +655,14 @@
       replyContext.style.display = 'block';
       input.focus();
     }
-    
     function cancelReply() {
       currentReplyToId = null;
       replyContext.style.display = 'none';
     }
-    
     closeReplyBtn.addEventListener('click', cancelReply);
 
 
-    // --- ¡FUNCIÓN 'addMessage' MODIFICADA MASIVAMENTE! ---
+    // --- ¡FUNCIÓN 'addMessage' MODIFICADA! ---
     function addMessage(data, type = 'chat') {
       const item = document.createElement('li');
       
@@ -671,68 +670,66 @@
         item.textContent = data;
         item.className = 'system';
       } else { 
-        // ¡CAMBIO! Guardamos el ID del mensaje en el <li>
         item.id = `msg-${data.id}`;
         item.dataset.user = data.user;
         
         const formattedText = parseDiscordMarkdown(data.text);
         const time = formatTimestamp(data.timestamp);
-
-        // 1. Crear el Avatar
-        const avatar = document.createElement('img');
-        avatar.src = getAvatarUrl(data.user);
-        avatar.className = 'avatar';
         
-        // 2. Crear el contenedor de la burbuja
-        const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
-        
-        // 3. Crear el contenido de texto (para el reply)
-        const textContent = document.createElement('div');
-        textContent.className = 'message-text-content'; // Para buscarlo al responder
-        
-        // 4. (¡NUEVO!) Añadir bloque de respuesta si existe
+        // --- ¡CAMBIO! Lógica de respuesta movida ---
+        // 1. (¡NUEVO!) Crear el bloque de respuesta si existe
         if (data.reply_to_id) {
           const originalMsg = document.getElementById(`msg-${data.reply_to_id}`);
           if (originalMsg) {
             const originalUser = originalMsg.dataset.user;
-            const originalText = originalMsg.querySelector('.message-text-content').textContent;
             
-            const replyQuote = document.createElement('div');
-            replyQuote.className = 'reply-quote';
-            replyQuote.innerHTML = `<strong>${originalUser}</strong> ${escapeHTML(originalText)}`;
+            const replyRef = document.createElement('div');
+            replyRef.className = 'reply-reference';
+            replyRef.innerHTML = `↩️ Respondiendo a <strong>${originalUser}</strong>`;
+            replyRef.dataset.replyId = `msg-${data.reply_to_id}`; // Para el clic
             
-            bubble.appendChild(replyQuote); // Añade el quote ANTES del mensaje
+            // Añade la referencia al 'li' ANTES del contenedor del mensaje
+            item.appendChild(replyRef);
           }
         }
 
+        // 2. Crear el Avatar
+        const avatar = document.createElement('img');
+        avatar.src = getAvatarUrl(data.user);
+        avatar.className = 'avatar';
+        
+        // 3. Crear el contenedor de la burbuja
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        
+        // 4. Crear el contenido de texto (para el reply)
+        const textContent = document.createElement('div');
+        textContent.className = 'message-text-content';
+        
         // 5. Añadir nombre, texto y timestamp
         if (data.user === myUsername) {
           item.className = 'me';
           textContent.innerHTML = `${formattedText} <span class="timestamp">${time}</span>`;
         } else {
           item.className = 'other';
-          // El nombre del usuario ahora va dentro de la burbuja
           textContent.innerHTML = `<strong>${data.user}</strong>${formattedText} <span class="timestamp">${time}</span>`;
         }
-        bubble.appendChild(textContent); // Añade el texto a la burbuja
+        bubble.appendChild(textContent);
         
         // 6. (¡NUEVO!) Crear botones de acción
         const actions = document.createElement('div');
         actions.className = 'message-actions';
         
-        // Botón de Responder
         const replyBtn = document.createElement('button');
         replyBtn.className = 'action-btn reply-btn';
-        replyBtn.innerHTML = '↩️'; // Emoji de respuesta
+        replyBtn.innerHTML = '↩️';
         replyBtn.dataset.messageId = item.id;
         actions.appendChild(replyBtn);
 
-        // Botón de Borrar (solo si es mi mensaje)
         if (data.user === myUsername) {
           const deleteBtn = document.createElement('button');
           deleteBtn.className = 'action-btn delete-btn';
-          deleteBtn.innerHTML = '🗑️'; // Emoji de papelera
+          deleteBtn.innerHTML = '🗑️';
           deleteBtn.dataset.messageId = item.id;
           actions.appendChild(deleteBtn);
         }
@@ -742,8 +739,9 @@
         msgContainer.className = 'message-container';
         msgContainer.appendChild(avatar);
         msgContainer.appendChild(bubble);
-        msgContainer.appendChild(actions); // Añade los botones al contenedor
+        msgContainer.appendChild(actions);
         
+        // 8. Añadir el contenedor al 'li'
         item.appendChild(msgContainer);
       }
       
@@ -755,21 +753,38 @@
     
     // Listener de clic para botones de acción (Delegación de eventos)
     messages.addEventListener('click', (e) => {
-      const target = e.target;
-      
-      // Si se hace clic en el botón de responder
-      if (target.classList.contains('reply-btn')) {
-        const messageId = target.dataset.messageId;
+      // 1. Clic en un botón de responder
+      const replyBtn = e.target.closest('.reply-btn');
+      if (replyBtn) {
+        const messageId = replyBtn.dataset.messageId;
         startReply(messageId);
+        return; // Detiene la ejecución
       }
       
-      // Si se hace clic en el botón de borrar
-      if (target.classList.contains('delete-btn')) {
-        const messageId = target.dataset.messageId;
+      // 2. Clic en un botón de borrar
+      const deleteBtn = e.target.closest('.delete-btn');
+      if (deleteBtn) {
+        const messageId = deleteBtn.dataset.messageId;
         const msgIdNumber = parseInt(messageId.split('-')[1]);
         if (confirm('¿Seguro que quieres borrar este mensaje?')) {
           socket.emit('delete message', msgIdNumber);
         }
+        return; // Detiene la ejecución
+      }
+      
+      // 3. Clic en una referencia de respuesta
+      const replyRef = e.target.closest('.reply-reference');
+      if (replyRef) {
+        const messageId = replyRef.dataset.replyId;
+        const originalMsg = document.getElementById(messageId);
+        if (originalMsg) {
+          originalMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          originalMsg.classList.add('highlight');
+          setTimeout(() => {
+            originalMsg.classList.remove('highlight');
+          }, 1500); // 1.5 segundos
+        }
+        return; // Detiene la ejecución
       }
     });
     
