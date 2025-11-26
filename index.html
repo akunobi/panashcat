@@ -27,13 +27,13 @@
       --text-secondary: var(--dracula-comment);
       
       --accent: var(--purple); 
-      --accent-hover: var(--pink); /* Color de hover */
+      --accent-hover: var(--pink); 
 
       /* Dimensiones */
       --header-height: 48px;
       --input-height: 60px;
       --typing-height: 20px;
-      --user-list-width: 200px; /* Ancho de la sidebar */
+      --user-list-width: 200px; 
     }
 
     /* Estilos Generales */
@@ -43,7 +43,6 @@
       font-family: 'Inter', sans-serif;
       background-color: var(--bg-app);
       color: var(--text-primary);
-      /* Para la app de chat */
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -75,7 +74,7 @@
       font-size: 1.5rem;
     }
     #toggle-users {
-        display: block; /* Siempre visible, se oculta solo en escritorio via media query */
+        display: block; 
     }
     
     /* Contenedor principal de Mensajes y Usuarios */
@@ -100,7 +99,7 @@
       margin: 0;
       padding: 10px 10px var(--typing-height) 10px;
       flex-grow: 1; 
-      overflow-y: auto; /* CRÍTICO: Permite el scroll */
+      overflow-y: auto; 
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
     }
@@ -255,7 +254,7 @@
       font-weight: bold;
     }
 
-    /* --- LOGIN OVERLAY (Manteniendo el diseño simple) --- */
+    /* --- LOGIN OVERLAY --- */
     #login-overlay {
       position: fixed;
       top: 0;
@@ -271,7 +270,6 @@
     }
     #login-overlay h1 { 
         color: var(--accent); 
-        /* Para que se vea como en la imagen, si la fuente lo permite */
         font-family: 'Fira Code', monospace; 
     }
     #login-overlay input {
@@ -306,7 +304,6 @@
       border-left: 1px solid var(--dracula-selection);
       overflow-y: auto;
       padding: 10px;
-      /* Ocultar por defecto (móvil) */
       display: none; 
     }
     #user-list-sidebar h3 {
@@ -386,13 +383,13 @@
     /* --- Media Queries (Adaptación para Escritorio) --- */
     @media (min-width: 768px) {
         #toggle-users {
-            display: none !important; /* Ocultar el botón de menú en escritorio */
+            display: none !important; 
         }
         #user-list-sidebar {
-            display: block; /* Mostrar la sidebar permanente en escritorio */
+            display: block; 
         }
         #user-list-overlay {
-            display: none !important; /* Ocultar el overlay en escritorio */
+            display: none !important; 
         }
     }
   </style>
@@ -411,7 +408,8 @@
         <header id="header">
             <span id="chat-title">Chat Global</span>
             <div>
-                <span id="toggle-users" role="button">👥</span> <span id="go-global" style="margin-left: 10px; color: var(--green); cursor: pointer; display: none;" title="Volver al chat global">🌍</span>
+                <span id="toggle-users" role="button">👥</span> 
+                <span id="go-global" style="margin-left: 10px; color: var(--green); cursor: pointer; display: none;" title="Volver al chat global">🌍</span>
             </div>
         </header>
 
@@ -592,11 +590,11 @@
             const meta = document.createElement('div');
             meta.classList.add('msg-meta');
             
-            // Icono de perfil
+            // Icono de perfil (asumiendo que las imágenes están en la carpeta 'images/')
             const profileIcon = document.createElement('img');
             profileIcon.src = `./images/${msg.user}.png`; 
             profileIcon.onerror = function() {
-                this.src = `./images/${msg.user}.jpg`;
+                this.src = `./images/${msg.user}.jpg`; // Fallback a .jpg
             };
             profileIcon.style.width = '20px';
             profileIcon.style.height = '20px';
@@ -640,12 +638,12 @@
                         originalMsg.style.backgroundColor = 'rgba(80, 250, 123, 0.2)';
                         setTimeout(() => originalMsg.style.backgroundColor = '', 1000);
                     } else {
-                        // En este punto, no tenemos el texto original, solo su ID.
-                        alert(`Mensaje original #${msg.reply_to_id} no visible o no encontrado.`);
+                        // Mensaje de que el mensaje original no está cargado
+                        alert(`Mensaje original #${msg.reply_to_id} no visible o no encontrado en el historial actual.`);
                     }
                 };
 
-                // No tenemos el texto original en la propiedad del mensaje, por lo que buscamos en el DOM.
+                // Buscamos el usuario original en el DOM
                 const originalMsg = document.getElementById(`msg-${msg.reply_to_id}`);
                 const originalUser = originalMsg ? originalMsg.querySelector('.msg-user').textContent : 'Usuario Desconocido';
                 
@@ -700,11 +698,19 @@
 
         // --- 3. MANEJO DE EVENTOS (LISTENERS) ---
 
-        // A. LOGIN
+        // A. LOGIN (CORRECCIÓN DE LÓGICA)
         els.loginButton.onclick = () => {
             const username = els.loginInput.value.trim();
             if (username) {
+                // Desactivar el botón para evitar clics dobles
+                els.loginButton.disabled = true;
+                els.loginError.textContent = 'Intentando conectar...';
+                
+                // El servidor devuelve un booleano (success)
                 socket.emit('login', username, (success) => {
+                    // Reactivar el botón, independientemente del resultado
+                    els.loginButton.disabled = false;
+                    
                     if (success) {
                         myUsername = username;
                         els.loginOverlay.style.display = 'none';
@@ -712,7 +718,7 @@
                         switchContext('global'); 
                         els.input.focus();
                     } else {
-                        els.loginError.textContent = 'Nombre de usuario no permitido. Intenta con Rafa, Hugo, Sergio o Alvaro.';
+                        els.loginError.textContent = 'Nombre de usuario no permitido. Intenta con Rafa, Hugo, Sergio o Álvaro.';
                     }
                 });
             }
@@ -721,23 +727,19 @@
             if (e.key === 'Enter') els.loginButton.click();
         });
 
-        // B. ENVÍO DE MENSAJES
+        // B. ENVÍO DE MENSAJES (Texto)
         els.form.addEventListener('submit', (e) => {
             e.preventDefault();
             const text = els.input.value.trim();
             const replyId = replyToMessage ? replyToMessage.id : null;
             
-            if (text || els.fileInput.files.length > 0) {
-                // Si hay archivo, se maneja en el listener del fileInput. 
-                // Aquí solo nos centramos en el texto si no hay archivo.
-                if (text) {
-                    if (chatContext.type === 'global') {
-                        socket.emit('chat message', text, replyId);
-                    } else {
-                        socket.emit('private message', chatContext.target, text, replyId, 'text');
-                    }
-                    els.input.value = '';
+            if (text) {
+                if (chatContext.type === 'global') {
+                    socket.emit('chat message', text, replyId);
+                } else {
+                    socket.emit('private message', chatContext.target, text, replyId, 'text');
                 }
+                els.input.value = '';
                 cancelReply();
             }
         });
@@ -820,7 +822,7 @@
                 d.type === 'private' && chatContext.type === 'private' && d.target === chatContext.target) {
                 
                 els.messages.innerHTML = '';
-                // Los mensajes privados vienen con el campo 'sender' en el backend
+                // Usamos el campo correcto que viene del backend ('user_name' para global, 'sender' para privado)
                 d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user_name || m.sender }));
             }
         });
@@ -837,6 +839,7 @@
         const typers = new Set();
         socket.on('user typing', d => {
             if (d.user === myUsername) return;
+            // Solo mostrar si es el contexto correcto
             if (d.context !== chatContext.type) return;
             if (d.context === 'private' && d.user !== chatContext.target) return;
 
@@ -863,7 +866,7 @@
                 </li>
             `).join('');
 
-            // Actualizar ambas listas
+            // Actualizar ambas listas y mantener el data-user para el highlight
             els.userListUl.innerHTML = userHtml;
             els.userListUlOverlay.innerHTML = userHtml;
             updateUserListHighlight();
@@ -872,15 +875,20 @@
         // --- 5. INITIAL CONNECTION / RECONNECT LOGIC ---
         socket.on('connect', () => {
             if (myUsername) {
+                // Reintentar login automáticamente en caso de reconexión
                 socket.emit('login', myUsername, (success) => {
                     if (success) {
                         console.log('Reconexión exitosa.');
                         // Volver a cargar el historial del contexto actual
                         if (chatContext.type === 'global') {
                             socket.emit('get global history');
-                        } else {
+                        } else if (chatContext.target) {
                             socket.emit('get private history', chatContext.target);
                         }
+                    } else {
+                         // Si la reconexión falla, llevar al login por seguridad
+                         console.error('Fallo en la reconexión.');
+                         // No hacemos nada, el usuario podría haber sido desconectado por el servidor
                     }
                 });
             }
