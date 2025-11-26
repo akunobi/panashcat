@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>DRACULA CHAT // Final Layout</title>
+  <meta charset="UTF-8">
+  <title>DRACULA CHAT // DMs Update</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
       /* --- PALETA DRÁCULA --- */
@@ -11,536 +12,481 @@
       --dracula-fg: #f8f8f2; 
       --dracula-selection: #44475a;  
       --dracula-comment: #6272a4;    
-      
-      --cyan: #8be9fd;      
-      --green: #50fa7b;     
-      --orange: #ffb86c;    
-      --pink: #ff79c6;      
       --purple: #bd93f9;    
-      --red: #ff5555;      
-      --yellow: #f1fa8c;    
-
-      /* --- VARIABLES GLOBALES --- */
-      --bg-app: var(--dracula-bg);
-      --bg-panel: var(--dracula-selection);
-      --text-primary: var(--dracula-fg);
-      --text-secondary: var(--dracula-comment);
-      
-      --accent: var(--purple); 
-      --accent-hover: var(--cyan);
-      
-      --font-body: 'Inter', sans-serif;
-      --font-code: 'Fira Code', monospace;
-      
-      --radius-bubble: 18px;
-      --radius-panel: 24px;
+      --green: #50fa7b;     
     }
 
-    /* Reset y Base */
     * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: var(--font-body); color: var(--text-primary);
-      background-color: var(--bg-app);
-      background-image: radial-gradient(var(--dracula-selection) 1px, transparent 1px);
-      background-size: 20px 20px;
-      display: flex; justify-content: center; align-items: center; 
-      height: 100vh; /* Fijo a la altura de la ventana */
-      font-size: 15px;
-      overflow: hidden; /* Evita scroll en el body */
+    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--dracula-bg); color: var(--dracula-fg); overflow: hidden; }
+
+    /* --- LOGIN OVERLAY --- */
+    #login-screen {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: var(--dracula-bg); z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .login-box {
+        background: var(--dracula-selection); padding: 2rem; border-radius: 12px;
+        text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    input[type="text"] {
+        padding: 12px; border-radius: 6px; border: none; width: 250px;
+        background: #21222c; color: white; outline: none; margin-bottom: 1rem;
+    }
+    button.btn-primary {
+        padding: 10px 24px; background: var(--purple); border: none; 
+        border-radius: 6px; color: #282a36; font-weight: bold; cursor: pointer;
+        transition: transform 0.1s;
+    }
+    button.btn-primary:active { transform: scale(0.98); }
+
+    /* --- APP LAYOUT (GRID) --- */
+    #app-container {
+        display: none; /* Se activa con JS */
+        display: grid; 
+        grid-template-columns: 260px 1fr; /* Sidebar | Chat */
+        height: 100vh; width: 100vw;
     }
 
-    /* Scrollbar Global */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--dracula-comment); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    /* --- SIDEBAR --- */
+    .sidebar {
+        background: #21222c; /* Tono más oscuro */
+        border-right: 1px solid var(--dracula-selection);
+        display: flex; flex-direction: column;
+        padding: 1rem;
+        overflow-y: auto;
+    }
+
+    .group-label {
+        font-size: 0.75rem; color: var(--dracula-comment);
+        text-transform: uppercase; letter-spacing: 1px; font-weight: 700;
+        margin: 1.5rem 0 0.5rem 0;
+    }
+
+    .nav-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px; margin-bottom: 4px;
+        border-radius: 6px; cursor: pointer;
+        color: #ccc; transition: all 0.2s;
+    }
+    .nav-item:hover { background: var(--dracula-selection); color: #fff; }
+    .nav-item.active { background: var(--dracula-selection); color: var(--purple); font-weight: 600; }
+
+    .nav-avatar {
+        width: 32px; height: 32px; border-radius: 50%; 
+        background: var(--dracula-comment); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: bold;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; margin-left: auto; }
+    .status-dot.online { background: var(--green); box-shadow: 0 0 5px var(--green); }
     
-    /* === CONTENEDOR PRINCIPAL (80% Ancho) === */
-    #main-app-container {
-      width: 80%; 
-      max-width: 1200px; 
-      height: 90vh; max-height: 900px;
-      background-color: var(--bg-panel);
-      border-radius: var(--radius-panel);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    @media (max-width: 768px) { #main-app-container { width: 100%; height: 100%; border-radius: 0; } }
-
-    /* === PANTALLA DE LOGIN === */
-    #login-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: var(--bg-app); 
-      display: flex; justify-content: center; align-items: center; z-index: 100;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-    #login-overlay.hidden { opacity: 0; visibility: hidden; }
-
-    #login-box {
-      background-color: var(--bg-panel); padding: 3rem; text-align: center;
-      border-radius: var(--radius-panel);
-      box-shadow: 0 0 20px rgba(189, 147, 249, 0.2);
-      border: 1px solid var(--accent);
-      max-width: 90%;
-    }
-    #login-box h1 { margin: 0 0 0.5rem 0; color: var(--accent-hover); font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; }
-    #login-box p { color: var(--text-secondary); margin-bottom: 2rem; }
-    
-    #login-profiles { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
-    .profile-card { cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: transform 0.2s; }
-    .profile-card:hover { transform: translateY(-5px); }
-    .profile-card img {
-      width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--dracula-comment); 
-      object-fit: cover; margin-bottom: 0.8rem; transition: border-color 0.2s;
-    }
-    .profile-card:hover img { border-color: var(--green); box-shadow: 0 0 15px var(--green); }
-    .profile-name { font-weight: 600; color: var(--text-primary); }
-    .profile-card:hover .profile-name { color: var(--green); }
-    #login-error { color: var(--red); margin-top: 1rem; display: none; font-weight: bold; }
-
-    /* === CABECERA DEL CHAT === */
-    #chat-header { 
-      background: rgba(40, 42, 54, 0.95); padding: 1.2rem 2rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      display: flex; justify-content: space-between; align-items: center;
-      z-index: 10;
-      flex-shrink: 0; /* No encoger */
-    }
-    #chat-header h2 { margin: 0; font-size: 1.1rem; font-weight: 500; color: var(--text-secondary); }
-    #chat-header h2 span { color: var(--accent-hover); font-weight: 700; text-transform: uppercase; }
-    
-    #user-list-toggle {
-        background: transparent; border: 1px solid var(--accent); color: var(--accent);
-        padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600;
-        transition: all 0.2s;
-    }
-    #user-list-toggle:hover { background: var(--accent); color: var(--bg-app); }
-
-    /* === ÁREA DE MENSAJES (SCROLL FIX) === */
-    #chat-main-content {
-      display: flex; flex-direction: column; 
-      height: 100%; 
-      min-height: 0; /* Crucial para flexbox anidado */
+    .unread-badge {
+        background: var(--purple); color: #fff; font-size: 0.7rem; 
+        padding: 2px 6px; border-radius: 10px; margin-left: auto; 
+        display: none; /* Oculto por defecto */
     }
 
-    #messages-area {
-      flex: 1; /* Ocupa el espacio restante */
-      display: flex; 
-      flex-direction: column; 
-      background-color: var(--bg-app);
-      position: relative;
-      min-height: 0; /* Crucial para permitir scroll */
+    /* --- CHAT AREA --- */
+    .chat-area {
+        display: flex; flex-direction: column;
+        position: relative; height: 100vh;
+        background: var(--dracula-bg);
     }
 
-    #messages { 
-      list-style-type: none; margin: 0; padding: 2rem; 
-      overflow-y: auto; /* Scroll solo aquí */
-      display: flex; flex-direction: column; gap: 1.5rem;
-      height: 100%; /* Asegura altura completa */
+    /* HEADER */
+    header {
+        height: 60px; border-bottom: 1px solid var(--dracula-selection);
+        display: flex; align-items: center; padding: 0 20px;
+        background: var(--dracula-bg); font-weight: 600; font-size: 1.1rem;
+    }
+    .header-icon { color: var(--dracula-comment); margin-right: 10px; font-family: 'Fira Code', monospace; }
+
+    /* MESSAGES LIST */
+    #messages {
+        flex: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; gap: 15px;
     }
     
-    /* ITEMS */
-    #messages li { 
-      width: 100%; 
-      display: flex;
-      position: relative;
-      padding: 0; margin: 0;
-      animation: fadeIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); 
+    /* INPUT AREA */
+    .input-area {
+        padding: 20px; background: var(--dracula-bg);
+        border-top: 1px solid var(--dracula-selection);
     }
-
-    .message-inner {
-        display: flex; max-width: 70%; align-items: flex-end; position: relative;
-    }
-
-    /* OTROS (Izquierda) */
-    #messages li.other { justify-content: flex-start; }
-    #messages li.other .message-inner { flex-direction: row; }
-    #messages li.other .avatar { margin-right: 12px; }
-    #messages li.other .message-bubble { 
-        background-color: var(--dracula-selection); color: var(--text-primary);
-        border-bottom-left-radius: 4px; 
-    }
-    #messages li.other .username-label {
-        color: var(--accent-hover); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;
-    }
-
-    /* MIOS (Derecha) */
-    #messages li.me { justify-content: flex-end; }
-    #messages li.me .message-inner { flex-direction: row-reverse; }
-    #messages li.me .avatar { margin-left: 12px; }
-    #messages li.me .message-bubble {
-        background: linear-gradient(135deg, var(--purple), #9665d6); color: #fff;
-        border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(189, 147, 249, 0.2);
-    }
-    #messages li.me .username-label { display: none; }
-    #messages li.me .timestamp { color: rgba(255,255,255,0.7); }
-
-    /* Componentes */
-    .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
-    .message-bubble { padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; position: relative; }
-    .message-bubble img { display: block; max-width: 100%; height: auto; border-radius: 12px; margin-top: 8px; cursor: pointer; }
-    .timestamp { display: block; text-align: right; font-size: 0.7rem; margin-top: 4px; opacity: 0.7; }
-
-    /* Acciones */
-    .message-actions { position: absolute; top: -10px; background: var(--bg-app); border: 1px solid var(--dracula-comment); border-radius: 20px; padding: 2px 6px; display: none; gap: 5px; z-index: 10; }
-    #messages li.me .message-inner:hover .message-actions { display: flex; right: 50px; }
-    #messages li.other .message-inner:hover .message-actions { display: flex; left: 50px; }
-    .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 2px 5px; opacity: 0.7; transition: 0.2s; }
-    .action-btn:hover { opacity: 1; transform: scale(1.1); }
-
-    /* Respuesta */
-    .reply-quote { font-size: 0.8rem; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid var(--accent-hover); opacity: 0.8; cursor: pointer; }
-    .reply-quote strong { display: block; color: var(--accent-hover); }
-
-    /* === BARRA DE ESCRITURA === */
-    #form-container { flex-shrink: 0; background: var(--bg-panel); border-top: 1px solid rgba(255,255,255,0.05); }
+    #chat-form { display: flex; gap: 12px; align-items: flex-end; }
     
-    #reply-context { background: var(--dracula-selection); padding: 0.5rem 2rem; display: none; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent-hover); font-size: 0.9rem; color: var(--text-secondary); }
-    #close-reply { cursor: pointer; color: var(--red); font-weight: bold; }
-    #typing-indicator { padding: 5px 2rem; height: 25px; font-size: 0.75rem; color: var(--yellow); font-style: italic; background: var(--bg-app); display: flex; align-items: center; }
-
-    #form { padding: 1.2rem 2rem; display: flex; align-items: flex-end; gap: 1rem; }
-    #attach-btn { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0.5rem; font-size: 1.2rem; transition: 0.2s; }
-    #attach-btn:hover { color: var(--accent-hover); transform: scale(1.1); }
+    #msg-input {
+        flex: 1; background: var(--dracula-selection); border: none;
+        color: white; padding: 14px; border-radius: 8px; outline: none;
+        font-family: inherit; resize: none; min-height: 50px; max-height: 150px;
+        line-height: 1.4;
+    }
     
-    #input { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--dracula-selection); border-radius: 20px; padding: 0.8rem 1.2rem; color: white; font-family: var(--font-body); font-size: 1rem; resize: none; max-height: 150px; transition: 0.2s; outline: none; }
-    #input:focus { border-color: var(--accent-hover); background: rgba(0,0,0,0.1); }
+    /* --- MESSAGE STYLES --- */
+    .message { display: flex; gap: 14px; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:translateY(0);} }
     
-    #form button[type="submit"] { background: var(--accent); border: none; width: 45px; height: 45px; border-radius: 50%; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; box-shadow: 0 4px 10px rgba(189, 147, 249, 0.3); }
-    #form button[type="submit"]:hover { background: var(--accent-hover); transform: scale(1.05); }
+    .msg-avatar { 
+        width: 40px; height: 40px; border-radius: 50%; background: var(--purple); 
+        display:flex; align-items:center; justify-content:center; font-weight:bold; color:#282a36; flex-shrink: 0;
+    }
+    .msg-content { display: flex; flex-direction: column; max-width: 85%; }
+    .msg-header { margin-bottom: 4px; display: flex; align-items: baseline; gap: 8px; }
+    .msg-user { color: var(--purple); font-weight: 600; cursor: pointer; }
+    .msg-time { font-size: 0.75rem; color: var(--dracula-comment); }
+    .msg-text { line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: #e2e2e2; }
+    
+    /* Contexto de Respuesta */
+    #reply-ctx {
+        display:none; align-items: center; justify-content: space-between;
+        background: #343746; padding: 8px 16px; 
+        border-left: 3px solid var(--purple); margin-bottom: 10px; border-radius: 4px;
+    }
 
-    /* Sistema / Utilidades */
-    #messages li.system { justify-content: center; }
-    #messages li.system .message-inner { max-width: 100%; flex-direction: row; }
-    #messages li.system .message-bubble { background: transparent; color: var(--yellow); font-style: italic; text-align: center; box-shadow: none; padding: 0; }
-    code { background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; color: var(--orange); font-family: var(--font-code); }
-    .spoiler { background: var(--dracula-comment); color: transparent; cursor: pointer; border-radius: 4px; }
-    .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: var(--dracula-selection); border-radius: 4px; }
 
-    /* Lista Usuarios */
-    #user-list-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(5px); }
-    #user-list-overlay.visible { display: flex; }
-    #user-list-box { background: var(--bg-panel); padding: 2rem; border-radius: 24px; width: 320px; border: 1px solid var(--accent); position: relative; }
-    #user-list-box h2 { color: var(--accent-hover); text-align: center; margin-top: 0; }
-    #user-list-box .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--red); cursor: pointer; font-size: 1.2rem; }
-    #user-list-ul { list-style: none; padding: 0; }
-    #user-list-ul li { padding: 0.8rem; margin-bottom: 0.5rem; background: var(--bg-app); border-radius: 12px; text-align: center; color: var(--text-primary); font-weight: 500; border-left: 4px solid transparent; }
-    #user-list-ul li[data-user="Hugo" i] { border-color: var(--green); }
-    #user-list-ul li[data-user="Rafa" i] { border-color: var(--pink); }
-    #user-list-ul li[data-user="Álvaro" i] { border-color: var(--orange); }
-    #user-list-ul li[data-user="Sergio" i] { border-color: var(--cyan); }
-
+    /* Responsive Móvil */
+    @media (max-width: 768px) {
+        #app-container { grid-template-columns: 1fr; }
+        .sidebar { display: none; position: absolute; z-index: 100; height: 100%; width: 80%; }
+        .sidebar.show { display: flex; }
+        #mobile-menu-btn { display: block !important; margin-right: 10px; }
+    }
   </style>
 </head>
 <body>
 
-  <div id="main-app-container">
-    
-    <div id="login-overlay">
-      <div id="login-box">
-        <h1>DRACULA CHAT</h1>
-        <p>Identifícate:</p>
-        <div id="login-profiles">
-          <div class="profile-card" data-username="Rafa"><img src="/images/Rafa.png"><div class="profile-name">Rafa</div></div>
-          <div class="profile-card" data-username="Hugo"><img src="/images/Hugo.png"><div class="profile-name">Hugo</div></div>
-          <div class="profile-card" data-username="Sergio"><img src="/images/Sergio.png"><div class="profile-name">Sergio</div></div>
-          <div class="profile-card" data-username="Álvaro"><img src="/images/Álvaro.png"><div class="profile-name">Álvaro</div></div>
-        </div>
-        <p id="login-error">Error de acceso.</p>
-      </div>
-    </div>
-
-    <div id="user-list-overlay">
-      <div id="user-list-box">
-        <button class="close-btn" id="close-user-list">✖</button>
-        <h2>Usuarios Online</h2>
-        <ul id="user-list-ul"></ul>
-      </div>
-    </div>
-
-    <div id="chat-main-content">
-      <div id="chat-header">
-        <h2>CHAT // <span id="current-user-span"></span></h2>
-        <button id="user-list-toggle">👥 Online</button>
-      </div>
-      
-      <div id="messages-area">
-        <ul id="messages"></ul>
-      </div>
-
-      <div id="form-container">
-        <div id="typing-indicator"></div>
-        <div id="reply-context">
-          <span>Respondiendo a <strong id="reply-context-user"></strong>: <span id="reply-context-text"></span></span>
-          <span id="close-reply">✖</span>
-        </div>
-        
-        <form id="form" action="">
-          <button type="button" id="attach-btn" title="Enviar imagen">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          </button>
-          <textarea id="input" autocomplete="off" placeholder="Mensaje..." rows="1"></textarea>
-          <input type="file" id="file-input" accept="image/*" style="display:none;">
-          <button type="submit">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-          </button>
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="margin-top:0; color:var(--purple);">DRACULA CHAT</h2>
+        <form id="login-form">
+            <input type="text" id="username-input" placeholder="Elige tu nombre..." autocomplete="off">
+            <br>
+            <button type="submit" class="btn-primary">ENTRAR</button>
         </form>
-      </div>
     </div>
-  </div>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io({ transports: ['websocket'], upgrade: false });
+<div id="app-container" style="display:none;"> <aside class="sidebar" id="sidebar">
+        <div class="nav-item active" id="btn-global">
+            <div class="nav-avatar" style="background: transparent; color: var(--dracula-comment); font-size: 1.2rem;">#</div>
+            <span>CANAL GLOBAL</span>
+        </div>
 
-    // Elementos DOM
+        <div class="group-label">MENSAJES DIRECTOS</div>
+        <div id="dm-list">
+            </div>
+
+        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid #444;">
+            <div class="nav-item" style="cursor: default;">
+                <div class="nav-avatar" id="my-avatar-display">yo</div>
+                <div style="display:flex; flex-direction:column; line-height:1.2;">
+                    <span id="my-username-display" style="font-weight:bold; font-size:0.9rem;">...</span>
+                    <span style="font-size:0.7rem; color: #888;">En línea</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="chat-area">
+        <header>
+            <button id="mobile-menu-btn" style="display:none; background:none; border:none; color:white; font-size:1.5rem;">☰</button>
+            <span class="header-icon" id="header-icon">#</span>
+            <span id="chat-title">GLOBAL</span>
+            <span id="typing-indicator" style="margin-left: 15px; font-size: 0.8rem; color: var(--dracula-comment); font-weight: 400;"></span>
+        </header>
+
+        <div id="messages"></div>
+
+        <div class="input-area">
+            <div id="reply-ctx">
+                <span style="font-size: 0.9rem; color: #ccc;">Respondiendo a <strong id="reply-to-user">User</strong></span>
+                <button id="close-reply" style="background:none; border:none; color:#fff; cursor:pointer;">✕</button>
+            </div>
+
+            <form id="chat-form">
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
+                <button type="button" id="btn-file" style="background:none; border:none; color: var(--purple); font-size: 1.5rem; cursor: pointer; padding-bottom: 5px;">+</button>
+                
+                <textarea id="msg-input" placeholder="Enviar mensaje..." rows="1"></textarea>
+                <button type="submit" class="btn-primary">Enviar</button>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    // --- DOM ELEMENTS ---
     const els = {
-        loginOverlay: document.getElementById('login-overlay'),
-        loginError: document.getElementById('login-error'),
+        loginScreen: document.getElementById('login-screen'),
+        loginForm: document.getElementById('login-form'),
+        userInput: document.getElementById('username-input'),
+        app: document.getElementById('app-container'),
+        
+        sidebar: document.getElementById('sidebar'),
+        dmList: document.getElementById('dm-list'),
+        btnGlobal: document.getElementById('btn-global'),
+        
+        chatTitle: document.getElementById('chat-title'),
+        headerIcon: document.getElementById('header-icon'),
         messages: document.getElementById('messages'),
-        form: document.getElementById('form'),
-        input: document.getElementById('input'),
-        userListOverlay: document.getElementById('user-list-overlay'),
-        userListUl: document.getElementById('user-list-ul'),
-        typing: document.getElementById('typing-indicator'),
-        replyCtx: document.getElementById('reply-context'),
-        replyUser: document.getElementById('reply-context-user'),
-        replyText: document.getElementById('reply-context-text'),
-        closeReply: document.getElementById('close-reply'),
+        
+        form: document.getElementById('chat-form'),
+        input: document.getElementById('msg-input'),
         fileInput: document.getElementById('file-input'),
-        attachBtn: document.getElementById('attach-btn'),
-        userSpan: document.getElementById('current-user-span'),
-        toggleUsers: document.getElementById('user-list-toggle'),
-        closeUsers: document.getElementById('close-user-list')
+        btnFile: document.getElementById('btn-file'),
+        
+        replyCtx: document.getElementById('reply-ctx'),
+        replyUser: document.getElementById('reply-to-user'),
+        closeReply: document.getElementById('close-reply'),
+        
+        myUserDisplay: document.getElementById('my-username-display'),
+        myAvatarDisplay: document.getElementById('my-avatar-display'),
+        mobileBtn: document.getElementById('mobile-menu-btn')
     };
 
+    // --- ESTADO ---
     let myUsername = '';
+    let activeChat = 'global'; // 'global' o nombre de usuario
     let currentReplyToId = null;
-    let isTyping = false;
-    let typingTimer;
+    let unreadCounts = {}; // { 'pepe': 2 }
 
-    // --- UTILIDADES ---
-    const getAvatar = user => `/images/${user}.png`; 
-    const fmtTime = ts => {
-        const d = new Date(ts * 1000);
-        return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    };
-    const escapeHTML = str => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    
-    function parseMarkdown(text) {
-        let t = escapeHTML(text);
-        t = t.replace(/\|\|(.*?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-        t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        t = t.replace(/__(.*?)__/g, '<u>$1</u>');
-        t = t.replace(/~~(.*?)~~/g, '<s>$1</s>');
-        t = t.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        t = t.replace(/`(.*?)`/g, '<code>$1</code>');
-        return t.replace(/\n/g, '<br>');
-    }
-
-    // --- IMÁGENES ---
-    const MAX_IMG = 25 * 1024 * 1024; 
-    async function sendImage(file) {
-        if (file.size > MAX_IMG) return alert("Imagen muy grande (>25MB)");
-        const reader = new FileReader();
-        reader.onload = () => {
-            socket.emit('chat image', reader.result, currentReplyToId);
-            cancelReply();
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // --- LOGIN ---
-    document.querySelectorAll('.profile-card').forEach(c => {
-        c.addEventListener('click', () => {
-            const name = c.dataset.username;
-            socket.emit('login', name, success => {
-                if (success) {
-                    myUsername = name;
-                    els.userSpan.textContent = name;
-                    els.loginOverlay.classList.add('hidden');
-                    els.input.focus();
-                } else {
-                    els.loginError.style.display = 'block';
-                }
-            });
-        });
+    // 1. LOGIN
+    els.loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const val = els.userInput.value.trim();
+        if(val) socket.emit('login', val);
     });
 
-    // --- CHAT LOGIC ---
-    els.form.addEventListener('submit', e => {
+    socket.on('login success', (user) => {
+        myUsername = user;
+        els.loginScreen.style.display = 'none';
+        els.app.style.display = 'grid'; // Mostrar App
+        els.myUserDisplay.textContent = user;
+        els.myAvatarDisplay.textContent = user.charAt(0).toUpperCase();
+
+        // Iniciar en Global
+        switchChat('global');
+    });
+
+    // 2. CAMBIO DE CHAT (SIDEBAR)
+    els.btnGlobal.onclick = () => switchChat('global');
+
+    function switchChat(target) {
+        activeChat = target;
+        
+        // UI Reset
+        els.messages.innerHTML = '';
+        cancelReply();
+        
+        // Highlight en Sidebar
+        els.btnGlobal.classList.toggle('active', target === 'global');
+        document.querySelectorAll('.dm-item').forEach(el => {
+            const isTarget = el.dataset.user === target;
+            el.classList.toggle('active', isTarget);
+            
+            // Si entramos al chat, limpiar notificaciones
+            if(isTarget) {
+                unreadCounts[target] = 0;
+                const badge = el.querySelector('.unread-badge');
+                if(badge) badge.style.display = 'none';
+            }
+        });
+
+        // Header Update
+        if(target === 'global') {
+            els.chatTitle.textContent = "CANAL GLOBAL";
+            els.headerIcon.textContent = "#";
+            socket.emit('join chat room', { target: null, type: 'global' });
+        } else {
+            els.chatTitle.textContent = target;
+            els.headerIcon.textContent = "@";
+            socket.emit('join chat room', { target: target, type: 'private' });
+        }
+
+        // Móvil: ocultar sidebar tras click
+        if(window.innerWidth < 768) els.sidebar.classList.remove('show');
+    }
+
+    // 3. ACTUALIZAR LISTA DE USUARIOS
+    socket.on('update user list', (users) => {
+        const others = users.filter(u => u !== myUsername);
+        
+        els.dmList.innerHTML = others.map(u => {
+            const count = unreadCounts[u] || 0;
+            const badgeStyle = count > 0 ? 'display:block' : 'display:none';
+            const isActive = activeChat === u ? 'active' : '';
+
+            return `
+            <div class="nav-item dm-item ${isActive}" data-user="${u}" onclick="switchChat('${u}')">
+                <div class="nav-avatar">${u.charAt(0).toUpperCase()}</div>
+                <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${u}</span>
+                <span class="unread-badge" style="${badgeStyle}">${count}</span>
+                <div class="status-dot online"></div>
+            </div>`;
+        }).join('');
+    });
+
+    // 4. ENVIAR MENSAJE
+    els.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const txt = els.input.value.trim();
-        if (!txt) return;
-        if (txt === '/clear_chat') socket.emit('clear chat request');
-        else socket.emit('chat message', txt, currentReplyToId);
+        const text = els.input.value.trim();
+        if(!text) return;
+
+        socket.emit('chat message', {
+            text: text,
+            type: 'text',
+            replyTo: currentReplyToId,
+            // Datos clave para privado
+            isPrivate: activeChat !== 'global',
+            targetUser: activeChat !== 'global' ? activeChat : null
+        });
+
         els.input.value = '';
         els.input.style.height = 'auto';
-        socket.emit('stop typing');
         cancelReply();
     });
 
-    els.input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); els.form.dispatchEvent(new Event('submit')); }
-        if (e.key === 'Escape') { if(currentReplyToId) cancelReply(); }
-    });
-
-    els.input.addEventListener('input', () => {
-        els.input.style.height = 'auto';
-        els.input.style.height = els.input.scrollHeight + 'px';
-        if (!isTyping) { isTyping = true; socket.emit('typing'); }
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => { isTyping = false; socket.emit('stop typing'); }, 2000);
-    });
-
-    els.attachBtn.addEventListener('click', () => els.fileInput.click());
-    els.fileInput.addEventListener('change', e => { if(e.target.files[0]) sendImage(e.target.files[0]); els.fileInput.value=null; });
-    els.input.addEventListener('paste', e => {
-        const item = (e.clipboardData.items[0]);
-        if (item && item.type.indexOf('image') !== -1) {
-            e.preventDefault(); sendImage(item.getAsFile());
+    // 5. RECIBIR MENSAJE (GLOBAL)
+    socket.on('chat message', (msg) => {
+        if(activeChat === 'global') {
+            renderMessage(msg);
         }
     });
 
-    // --- RENDER ---
-    function addMessage(data, type) {
-        const li = document.createElement('li');
-        li.id = `msg-${data.id}`;
-        
-        if (type === 'system') {
-            li.className = 'system';
-            li.innerHTML = `<div class="message-bubble">${data}</div>`;
+    // 6. RECIBIR MENSAJE (PRIVADO)
+    socket.on('private message incoming', (msg) => {
+        // ¿Quién es la otra persona en esta conversación?
+        const otherPerson = (msg.user_name === myUsername) ? msg.receiver : msg.user_name;
+
+        // Si tengo abierto ese chat, mostrar mensaje
+        if(activeChat === otherPerson) {
+            renderMessage(msg);
         } else {
-            const isMe = data.user === myUsername;
-            li.className = isMe ? 'me' : 'other';
-            li.dataset.user = data.user;
-
-            // Construcción de la burbuja
-            let contentHtml = '';
-            
-            // Referencia de respuesta
-            if (data.reply_to_id) {
-                contentHtml += `<div class="reply-quote" onclick="scrollToMsg(${data.reply_to_id})"><strong>Respuesta</strong></div>`;
+            // Si no, aumentar contador de no leídos
+            // (Si fui yo quien lo envié desde otro dispositivo, no contar como no leído)
+            if(msg.user_name !== myUsername) {
+                unreadCounts[otherPerson] = (unreadCounts[otherPerson] || 0) + 1;
+                updateBadge(otherPerson);
             }
-
-            // Nombre de usuario (solo para otros)
-            if (!isMe) contentHtml += `<span class="username-label">${data.user}</span>`;
-
-            // Contenido Real (Texto o Imagen)
-            if (data.type === 'image') {
-                contentHtml += `<img src="${data.text}" onclick="window.open(this.src)">`;
-            } else {
-                contentHtml += parseMarkdown(data.text);
-            }
-
-            // Timestamp y Botones
-            contentHtml += `<span class="timestamp">${fmtTime(data.timestamp)}</span>`;
-            
-            // Botones Acciones
-            const actions = `
-                <div class="message-actions">
-                    <button class="action-btn reply-btn" data-id="${data.id}">↩</button>
-                    ${isMe ? `<button class="action-btn delete-btn" style="color:var(--red)" data-id="${data.id}">🗑</button>` : ''}
-                </div>
-            `;
-
-            // Estructura Final del HTML
-            li.innerHTML = `
-                <div class="message-inner">
-                    <div class="avatar-wrapper">
-                        <img class="avatar" src="${getAvatar(data.user)}">
-                    </div>
-                    <div class="message-bubble">
-                        ${contentHtml}
-                    </div>
-                    ${actions}
-                </div>
-            `;
         }
-        els.messages.appendChild(li);
-        els.messages.scrollTop = els.messages.scrollHeight;
+    });
+
+    function updateBadge(user) {
+        const item = document.querySelector(`.dm-item[data-user="${user}"]`);
+        if(item) {
+            const badge = item.querySelector('.unread-badge');
+            badge.textContent = unreadCounts[user];
+            badge.style.display = 'block';
+        }
     }
 
-    // --- FUNCIONES GLOBALES PARA ONCLICK HTML ---
-    // Delegación de eventos para botones dinámicos
-    els.messages.addEventListener('click', (e) => {
-        const replyBtn = e.target.closest('.reply-btn');
-        if (replyBtn) {
-            const id = replyBtn.dataset.id;
-            const user = replyBtn.closest('li').dataset.user;
-            initReply(id, user);
-            return;
-        }
-        
-        const deleteBtn = e.target.closest('.delete-btn');
-        if (deleteBtn) {
-            const id = deleteBtn.dataset.id;
-            if(confirm("¿Borrar mensaje?")) socket.emit('delete message', id);
-            return;
-        }
+    // 7. HISTORIAL
+    socket.on('chat history', (history) => {
+        history.forEach(m => renderMessage(m));
+        scrollToBottom();
     });
 
-    window.initReply = (id, user) => {
+    // 8. RENDERIZADO VISUAL
+    function renderMessage(msg) {
+        const div = document.createElement('div');
+        div.className = 'message';
+        div.id = `msg-${msg.id}`;
+        
+        // Manejo de Respuesta (Reply) Visual
+        let replyHtml = '';
+        if(msg.reply_to_id) {
+            replyHtml = `<div style="font-size:0.8rem; color:#888; border-left:2px solid #666; padding-left:5px; margin-bottom:5px; cursor:pointer;" onclick="scrollToMsg(${msg.reply_to_id})">Respuesta a un mensaje...</div>`;
+        }
+
+        // Contenido (Texto o Imagen)
+        let contentHtml = `<div class="msg-text">${msg.text}</div>`;
+        if(msg.message_type === 'image') {
+            contentHtml = `<img src="${msg.text}" style="max-width:100%; border-radius:8px; margin-top:5px;">`;
+        }
+
+        div.innerHTML = `
+            <div class="msg-avatar">${msg.user_name.charAt(0).toUpperCase()}</div>
+            <div class="msg-content">
+                <div class="msg-header">
+                    <span class="msg-user" onclick="startReply(${msg.id}, '${msg.user_name}')">${msg.user_name}</span>
+                    <span class="msg-time">${new Date(parseInt(msg.timestamp)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                ${replyHtml}
+                ${contentHtml}
+            </div>
+        `;
+        els.messages.appendChild(div);
+        scrollToBottom();
+    }
+
+    // --- UTILS ---
+    function scrollToBottom() { els.messages.scrollTop = els.messages.scrollHeight; }
+
+    function startReply(id, user) {
         currentReplyToId = id;
-        els.replyUser.textContent = user;
-        
-        // Intentar capturar texto del DOM
-        const el = document.getElementById(`msg-${id}`);
-        let text = "Imagen";
-        // Buscar texto en burbuja, excluyendo nombre y timestamp si es posible, o simplificar
-        if (el) {
-             const bubble = el.querySelector('.message-bubble');
-             if (bubble && !bubble.querySelector('img:not(.avatar)')) {
-                 text = bubble.innerText.replace(user, '').replace(/\d{2}:\d{2}/, '').trim().substring(0, 30) + '...';
-             }
-        }
-        
-        els.replyText.textContent = text;
         els.replyCtx.style.display = 'flex';
+        els.replyUser.textContent = user;
         els.input.focus();
-    };
-
-    window.scrollToMsg = (id) => {
-        const el = document.getElementById(`msg-${id}`);
-        if(el) {
-            el.scrollIntoView({behavior: "smooth", block: "center"});
-            el.classList.add('highlight');
-            setTimeout(() => el.classList.remove('highlight'), 1500);
-        }
-    };
-
+    }
+    
     function cancelReply() {
         currentReplyToId = null;
         els.replyCtx.style.display = 'none';
     }
     els.closeReply.onclick = cancelReply;
 
-    // --- SOCKET EVENTS ---
-    socket.on('chat message', d => addMessage(d, 'chat'));
-    socket.on('system message', m => addMessage(m, 'system'));
-    socket.on('chat history', h => { els.messages.innerHTML=''; h.forEach(d => addMessage(d, 'chat')); });
-    socket.on('message deleted', id => { const el=document.getElementById(`msg-${id}`); if(el) el.remove(); });
-    socket.on('chat cleared', () => { els.messages.innerHTML=''; });
-    
-    // Typing
-    const typers = new Set();
-    socket.on('user typing', u => { if(u!==myUsername) typers.add(u); updateTyping(); });
-    socket.on('user stop typing', u => { typers.delete(u); updateTyping(); });
-    function updateTyping() {
-        els.typing.textContent = typers.size ? `${Array.from(typers).join(', ')} está escribiendo...` : '';
+    function scrollToMsg(id) {
+        const el = document.getElementById(`msg-${id}`);
+        if(el) {
+            el.scrollIntoView({behavior: 'smooth', block: 'center'});
+            el.style.background = '#44475a';
+            setTimeout(() => el.style.background = 'transparent', 1500);
+        }
     }
 
-    // Usuarios Online
-    socket.on('update user list', users => {
-        els.userListUl.innerHTML = users.map(u => `<li data-user="${u}">${u}</li>`).join('');
+    // Auto-crecimiento textarea
+    els.input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
     });
-    els.toggleUsers.onclick = () => els.userListOverlay.classList.add('visible');
-    els.closeUsers.onclick = () => els.userListOverlay.classList.remove('visible');
-    els.userListOverlay.onclick = (e) => { if(e.target===els.userListOverlay) els.userListOverlay.classList.remove('visible'); };
 
-  </script>
+    // Manejo de Imágenes
+    els.btnFile.onclick = () => els.fileInput.click();
+    els.fileInput.onchange = (e) => {
+        const f = e.target.files[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            // Enviar como imagen
+            socket.emit('chat message', {
+                text: evt.target.result, 
+                type: 'image',
+                replyTo: currentReplyToId,
+                isPrivate: activeChat !== 'global',
+                targetUser: activeChat !== 'global' ? activeChat : null
+            });
+            cancelReply();
+        };
+        reader.readAsDataURL(f);
+        els.fileInput.value = '';
+    }
+
+    // Botón Móvil
+    els.mobileBtn.onclick = () => els.sidebar.classList.toggle('show');
+    
+    // Sistema (limpiezas, etc)
+    socket.on('chat cleared', () => els.messages.innerHTML = '');
+    socket.on('message deleted', (id) => {
+        const el = document.getElementById(`msg-${id}`);
+        if(el) el.remove();
+    });
+
+</script>
 </body>
 </html>
