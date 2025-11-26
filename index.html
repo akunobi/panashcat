@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DRACULA CHAT // FINAL</title>
+  <title>DRACULA CHAT // FINAL CON SIDEBAR</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -33,7 +33,7 @@
       --header-height: 48px;
       --input-height: 60px;
       --typing-height: 20px;
-      --user-list-width: 200px;
+      --user-list-width: 200px; /* Ancho de la sidebar */
     }
 
     /* Estilos Generales */
@@ -53,8 +53,8 @@
     #app {
       display: flex;
       flex-direction: column;
-      flex-grow: 1; /* Ocupa el espacio restante */
-      overflow: hidden; /* Evita scroll doble en el cuerpo */
+      flex-grow: 1; 
+      overflow: hidden; 
     }
 
     /* Header */
@@ -75,7 +75,7 @@
       font-size: 1.5rem;
     }
     #toggle-users {
-        display: none; /* Ocultar por defecto, mostrar en móvil */
+        display: block; /* Siempre visible, se oculta solo en escritorio via media query */
     }
     
     /* Contenedor principal de Mensajes y Usuarios */
@@ -98,8 +98,8 @@
     #messages {
       list-style-type: none;
       margin: 0;
-      padding: 10px 10px var(--typing-height) 10px; /* Margen para el typing indicator */
-      flex-grow: 1; /* Ocupa todo el espacio disponible */
+      padding: 10px 10px var(--typing-height) 10px;
+      flex-grow: 1; 
       overflow-y: auto; /* CRÍTICO: Permite el scroll */
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
@@ -239,6 +239,7 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--green);
+      z-index: 15; 
     }
     .reply-context span {
       max-width: 90%;
@@ -254,7 +255,7 @@
       font-weight: bold;
     }
 
-    /* --- LOGIN OVERLAY --- */
+    /* --- LOGIN OVERLAY (Manteniendo el diseño simple) --- */
     #login-overlay {
       position: fixed;
       top: 0;
@@ -268,7 +269,11 @@
       align-items: center;
       z-index: 100;
     }
-    #login-overlay h1 { color: var(--accent); }
+    #login-overlay h1 { 
+        color: var(--accent); 
+        /* Para que se vea como en la imagen, si la fuente lo permite */
+        font-family: 'Fira Code', monospace; 
+    }
     #login-overlay input {
       padding: 10px;
       font-size: 1.2rem;
@@ -293,7 +298,7 @@
       margin-top: 10px;
     }
 
-    /* --- SIDEBAR DE USUARIOS --- */
+    /* --- SIDEBAR DE USUARIOS (ESCRITORIO) --- */
     #user-list-sidebar {
       width: var(--user-list-width);
       min-width: var(--user-list-width);
@@ -301,7 +306,7 @@
       border-left: 1px solid var(--dracula-selection);
       overflow-y: auto;
       padding: 10px;
-      /* Solo visible en escritorio */
+      /* Ocultar por defecto (móvil) */
       display: none; 
     }
     #user-list-sidebar h3 {
@@ -330,7 +335,8 @@
       background-color: var(--accent);
     }
 
-    /* Overlay para Móviles (se muestra cuando es necesario) */
+
+    /* --- OVERLAY DE USUARIOS (MÓVIL) --- */
     #user-list-overlay {
       position: fixed;
       top: 0;
@@ -405,7 +411,7 @@
         <header id="header">
             <span id="chat-title">Chat Global</span>
             <div>
-                <span id="toggle-users" role="button">☰</span> <span id="go-global" style="margin-left: 10px; color: var(--green); cursor: pointer;" title="Volver al chat global">🌍</span>
+                <span id="toggle-users" role="button">👥</span> <span id="go-global" style="margin-left: 10px; color: var(--green); cursor: pointer; display: none;" title="Volver al chat global">🌍</span>
             </div>
         </header>
 
@@ -459,7 +465,7 @@
         let typingTimeout = null;
         const TYPING_TIMER_LENGTH = 1000;
 
-        // Mapeo de elementos del DOM (más fácil de acceder)
+        // Mapeo de elementos del DOM
         const els = {
             app: document.getElementById('app'),
             loginOverlay: document.getElementById('login-overlay'),
@@ -498,7 +504,6 @@
 
         /** Mueve el scroll al final del chat. CRÍTICO para el scroll. */
         function scrollToBottom() {
-            // Se usa requestAnimationFrame para asegurar que el DOM se haya renderizado antes del scroll
             requestAnimationFrame(() => {
                 els.messages.scrollTop = els.messages.scrollHeight;
             });
@@ -506,41 +511,26 @@
         
         /** Maneja el cambio entre chat global y chat privado. */
         function switchContext(type, target = null) {
-            // Evitar cambiar si ya estamos en el contexto
             if (chatContext.type === type && chatContext.target === target) return;
 
-            // 1. Limpiar el chat actual
             els.messages.innerHTML = '';
-            
-            // 2. Actualizar contexto
             chatContext.type = type;
             chatContext.target = target;
 
-            // 3. Actualizar UI
             if (type === 'global') {
                 els.chatTitle.textContent = 'Chat Global 🌍';
                 els.goGlobal.style.display = 'none';
                 els.input.placeholder = 'Escribe un mensaje global...';
-                
-                // Volver a pedir el historial global
                 socket.emit('get global history'); 
-                
             } else {
                 els.chatTitle.textContent = `DM: ${target} 💬`;
                 els.goGlobal.style.display = 'inline';
                 els.input.placeholder = `Escribe un mensaje privado a ${target}...`;
-                
-                // Pedir historial privado
                 socket.emit('get private history', target); 
             }
             
-            // 4. Limpiar contexto de respuesta
             cancelReply();
-            
-            // 5. Ocultar overlay en móvil después de la selección
             els.userListOverlay.classList.remove('visible');
-            
-            // 6. Resaltar elemento activo en la lista de usuarios
             updateUserListHighlight();
         }
         
@@ -604,8 +594,7 @@
             
             // Icono de perfil
             const profileIcon = document.createElement('img');
-            profileIcon.src = `./images/${msg.user}.png`; // Asumiendo .png o .jpg
-            // Intentar cargar .png. Si falla, intentar .jpg
+            profileIcon.src = `./images/${msg.user}.png`; 
             profileIcon.onerror = function() {
                 this.src = `./images/${msg.user}.jpg`;
             };
@@ -644,22 +633,19 @@
                 replyDiv.classList.add('msg-reply');
                 replyDiv.title = 'Haga click para ir al mensaje original';
                 
-                // Enlace al mensaje original (si está en la pantalla)
                 replyDiv.onclick = () => {
                     const originalMsg = document.getElementById(`msg-${msg.reply_to_id}`);
                     if (originalMsg) {
                         originalMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        // Opcional: Resaltar temporalmente el mensaje original
                         originalMsg.style.backgroundColor = 'rgba(80, 250, 123, 0.2)';
                         setTimeout(() => originalMsg.style.backgroundColor = '', 1000);
                     } else {
-                        console.log(`Mensaje original #${msg.reply_to_id} no encontrado.`);
+                        // En este punto, no tenemos el texto original, solo su ID.
+                        alert(`Mensaje original #${msg.reply_to_id} no visible o no encontrado.`);
                     }
                 };
 
-                // Recuperar info del reply para mostrar (requiere buscar en el DOM/historial)
-                // Por simplicidad, aquí solo mostramos el ID, pero lo ideal sería mostrar el contenido.
-                // En este ejemplo, usaremos un texto genérico si el original no está visible:
+                // No tenemos el texto original en la propiedad del mensaje, por lo que buscamos en el DOM.
                 const originalMsg = document.getElementById(`msg-${msg.reply_to_id}`);
                 const originalUser = originalMsg ? originalMsg.querySelector('.msg-user').textContent : 'Usuario Desconocido';
                 
@@ -677,7 +663,7 @@
             
             if (msg.type === 'image') {
                 const img = document.createElement('img');
-                img.src = msg.text; // La URL o base64
+                img.src = msg.text; 
                 img.classList.add('msg-image');
                 contentDiv.appendChild(img);
             } else {
@@ -723,7 +709,7 @@
                         myUsername = username;
                         els.loginOverlay.style.display = 'none';
                         els.app.style.display = 'flex';
-                        switchContext('global'); // Iniciar en el chat global
+                        switchContext('global'); 
                         els.input.focus();
                     } else {
                         els.loginError.textContent = 'Nombre de usuario no permitido. Intenta con Rafa, Hugo, Sergio o Alvaro.';
@@ -741,14 +727,17 @@
             const text = els.input.value.trim();
             const replyId = replyToMessage ? replyToMessage.id : null;
             
-            if (text) {
-                // 1. Enviar mensaje de texto
-                if (chatContext.type === 'global') {
-                    socket.emit('chat message', text, replyId);
-                } else {
-                    socket.emit('private message', chatContext.target, text, replyId, 'text');
+            if (text || els.fileInput.files.length > 0) {
+                // Si hay archivo, se maneja en el listener del fileInput. 
+                // Aquí solo nos centramos en el texto si no hay archivo.
+                if (text) {
+                    if (chatContext.type === 'global') {
+                        socket.emit('chat message', text, replyId);
+                    } else {
+                        socket.emit('private message', chatContext.target, text, replyId, 'text');
+                    }
+                    els.input.value = '';
                 }
-                els.input.value = '';
                 cancelReply();
             }
         });
@@ -758,20 +747,24 @@
             const file = e.target.files[0];
             if (!file) return;
 
+            els.sendButton.disabled = true;
+            els.input.placeholder = "Cargando imagen...";
+            
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64Data = reader.result;
                 const replyId = replyToMessage ? replyToMessage.id : null;
 
-                // 2. Enviar imagen (Data URI)
                 if (chatContext.type === 'global') {
                     socket.emit('chat image', base64Data, replyId);
                 } else {
                     socket.emit('private message', chatContext.target, base64Data, replyId, 'image');
                 }
                 
-                // Limpiar input y contexto
+                // Limpiar y restaurar
                 els.fileInput.value = null; 
+                els.sendButton.disabled = false;
+                els.input.placeholder = "Escribe un mensaje...";
                 cancelReply();
             };
             reader.readAsDataURL(file);
@@ -781,12 +774,10 @@
         els.input.addEventListener('input', () => {
             if (!myUsername) return;
             
-            // 1. Enviar 'typing'
             if (!typingTimeout) {
                 socket.emit('typing', chatContext.type === 'global' ? 'global' : chatContext.target);
             }
 
-            // 2. Reiniciar timer de 'stop typing'
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => {
                 socket.emit('stop typing', chatContext.type === 'global' ? 'global' : chatContext.target);
@@ -804,7 +795,6 @@
 
         // --- 4. SOCKET LISTENERS (SERVER) ---
 
-        // Recibir mensaje global o privado. Los DMs siempre pasan por aquí.
         socket.on('chat message', (msg) => {
             if (chatContext.type === 'global') {
                 addMessage(msg);
@@ -812,7 +802,6 @@
         });
         
         socket.on('private message', (msg) => {
-            // Mostrar solo si estoy en el DM con el remitente o el destinatario
             const isTarget = (msg.user === myUsername && msg.recipient === chatContext.target) || 
                              (msg.user === chatContext.target && msg.recipient === myUsername);
                              
@@ -827,12 +816,12 @@
 
         // Historial (Global o Privado)
         socket.on('chat history', d => {
-            // Asegurarse de que el historial corresponde al contexto actual
             if (d.type === 'global' && chatContext.type === 'global' || 
                 d.type === 'private' && chatContext.type === 'private' && d.target === chatContext.target) {
                 
                 els.messages.innerHTML = '';
-                d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user || m.sender }));
+                // Los mensajes privados vienen con el campo 'sender' en el backend
+                d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user_name || m.sender }));
             }
         });
         
@@ -840,7 +829,6 @@
         socket.on('message deleted', id => { 
             const e = document.getElementById(`msg-${id}`); 
             if(e) e.remove(); 
-            // Si se elimina el mensaje al que respondíamos, cancelar el reply
             if (replyToMessage && replyToMessage.id === id) cancelReply();
         });
         socket.on('chat cleared', () => els.messages.innerHTML = '');
@@ -848,11 +836,8 @@
         // Typing
         const typers = new Set();
         socket.on('user typing', d => {
-            // Si el mensaje viene de mi, ignorar
             if (d.user === myUsername) return;
-            // Si el contexto no coincide, ignorar
             if (d.context !== chatContext.type) return;
-            // Si es DM, sólo mostrar si el user es el target
             if (d.context === 'private' && d.user !== chatContext.target) return;
 
             typers.add(d.user);
@@ -870,7 +855,6 @@
 
         // Lista de Usuarios
         socket.on('update user list', users => {
-            // La lista de usuarios es la misma para el sidebar y el overlay
             const userHtml = users.map(u => `
                 <li data-user="${u}" onclick="${u === myUsername ? '' : `switchContext('private', '${u}')`}">
                     ${u} 
@@ -879,6 +863,7 @@
                 </li>
             `).join('');
 
+            // Actualizar ambas listas
             els.userListUl.innerHTML = userHtml;
             els.userListUlOverlay.innerHTML = userHtml;
             updateUserListHighlight();
@@ -886,7 +871,6 @@
         
         // --- 5. INITIAL CONNECTION / RECONNECT LOGIC ---
         socket.on('connect', () => {
-            // Si el usuario ya se había logeado (ej. tras reconexión), intentar login de nuevo
             if (myUsername) {
                 socket.emit('login', myUsername, (success) => {
                     if (success) {
