@@ -1,4 +1,4 @@
-// server.js
+// 1. Importar las librerías
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -9,229 +9,222 @@ const { Pool } = require('pg');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
-  maxHttpBufferSize: 50 * 1024 * 1024, // 50MB para imágenes
+  // Aumentar el límite de payload para manejar imágenes grandes (25MB + margen)
+  maxHttpBufferSize: 30 * 1024 * 1024, 
   transports: ['websocket'], 
   upgrade: false 
 });
 const PORT = process.env.PORT || 3000; 
 
-// ---- Listas de usuarios (Simulación de Auth) ----
-// Puedes añadir más o quitar esta restricción si quieres
-const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Álvaro', 'Invitado'];
+// ---- Listas de usuarios ----
+const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Álvaro'];
 const onlineUsers = new Set();
 
 // ---- Configuración de Base de Datos (PostgreSQL) ----
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 async function setupDatabase() {
   try {
     console.log('Conectando a la base de datos PostgreSQL...');
     
-    // 1. Tabla Mensajes Globales
+    // 1. Creación de la tabla 'messages'
     await db.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
         user_name TEXT,
         text TEXT,
         timestamp BIGINT,
-        reply_to_id INTEGER,
-        message_type TEXT DEFAULT 'text'
-      );
-    `);
-
-    // 2. Tabla Mensajes Privados (NUEVA)
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS direct_messages (
-        id SERIAL PRIMARY KEY,
-        sender TEXT,
-        receiver TEXT,
-        text TEXT,
-        timestamp BIGINT,
-        reply_to_id INTEGER,
-        message_type TEXT DEFAULT 'text'
+        reply_to_id INTEGER
       );
     `);
     
-    console.log('Tablas configuradas correctamente.');
+    // 2. Añadir la columna message_type para diferenciar texto e imagen
+    await db.query(`
+      ALTER TABLE messages 
+      ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'
+    `);
+    
+    // Limpieza de mensajes antiguos (2 semanas)
+    const twoWeeksAgo = Math.floor(Date.now() / 1000) - 1209600;
+    await db.query(`DELETE FROM messages WHERE timestamp < $1`, [twoWeeksAgo]);
+    
+    console.log('Base de datos lista.');
   } catch (err) {
-    console.error('Error config DB:', err);
+    console.error('Error al configurar la base de datos:', err);
   }
 }
+setupDatabase();
 
-// Configurar archivos estáticos
-app.use(express.static(path.join(__dirname, '/')));
+// ---- Servir Archivos ----
+// Asumiendo que las imágenes de perfil están en una carpeta 'images'
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-// ---- SOCKET.IO LOGIC ----
+// ---- Lógica del Chat (Socket.IO) ----
 io.on('connection', (socket) => {
-  console.log('Nuevo socket conectado:', socket.id);
+  console.log('✅ Un cliente se ha conectado (WebSocket).');
 
-  // 1. Login
-  socket.on('login', async (username) => {
-    // Validación simple (puedes quitar el check de allowedUsers si quieres entrada libre)
-    /* if (!allowedUsers.includes(username)) {
-       socket.emit('login error', 'Usuario no permitido');
-       return;
-    } */
+  // 1. Evento de Login
+  socket.on('login', async (username, callback) => {
+    if (allowedUsers.includes(username)) {
+      socket.username = username;
+      callback(true);
+      
+      onlineUsers.add(username);
+      io.emit('update user list', Array.from(onlineUsers));
+      io.emit('system message', `${username} se ha unido.`);
 
-    socket.username = username;
-    onlineUsers.add(username);
-    
-    // Unir al usuario a su propia sala personal para recibir notificaciones
-    socket.join(username);
-
-    socket.emit('login success', username);
-    io.emit('update user list', Array.from(onlineUsers));
-    io.emit('system message', `${username} ha entrado al chat.`);
-  });
-
-  // 2. Unirse a una sala (Global o Privada) y cargar historial
-  socket.on('join chat room', async ({ target, type }) => {
-    if (!socket.username) return;
-
-    // Salir de salas de chat previas (excepto su sala personal 'socket.username')
-    const rooms = Array.from(socket.rooms);
-    rooms.forEach(room => {
-        if (room !== socket.id && room !== socket.username) {
-            socket.leave(room);
-        }
-    });
-
-    if (type === 'global') {
-        socket.join('global_room');
-        
-        // Cargar historial Global
-        const res = await db.query('SELECT * FROM messages ORDER BY id ASC');
-        socket.emit('chat history', res.rows);
-
-    } else if (type === 'private') {
-        // Crear ID único para la sala: "UsuarioA_UsuarioB" (orden alfabético)
-        const users = [socket.username, target].sort();
-        const roomName = `dm_${users[0]}_${users[1]}`;
-        
-        socket.join(roomName);
-
-        // Cargar historial Privado
-        const res = await db.query(`
-            SELECT * FROM direct_messages 
-            WHERE (sender = $1 AND receiver = $2) OR (sender = $2 AND receiver = $1)
-            ORDER BY id ASC
-        `, [socket.username, target]);
-        
-        // Formatear para que el frontend lo lea igual (user_name = sender)
-        const history = res.rows.map(m => ({
-            id: m.id,
-            user_name: m.sender,
-            text: m.text,
-            timestamp: m.timestamp,
-            message_type: m.message_type,
-            reply_to_id: m.reply_to_id,
-            isPrivate: true
-        }));
-        
-        socket.emit('chat history', history);
+      try {
+        const twoWeeksAgo = Math.floor(Date.now() / 1000) - 1209600;
+        // Seleccionamos 'message_type' como 'type'
+        const history = await db.query(
+          `SELECT id, user_name AS "user", text, timestamp, reply_to_id, message_type AS "type"
+           FROM messages 
+           WHERE timestamp >= $1 
+           ORDER BY timestamp ASC`, 
+          [twoWeeksAgo]
+        );
+        socket.emit('chat history', history.rows);
+      } catch (e) {
+        console.error('Error al consultar la DB:', e);
+      }
+      
+    } else {
+      callback(false);
     }
   });
 
-  // 3. Chat Message (Global o Privado)
-  socket.on('chat message', async (data) => {
-    if (!socket.username) return;
+  // 2. Evento de Mensaje de Texto
+  socket.on('chat message', async (msg, replyToId) => {
+    if (socket.username) {
+      const timestamp = Math.floor(Date.now() / 1000);
+      
+      try {
+        const result = await db.query(
+          `INSERT INTO messages (user_name, text, timestamp, reply_to_id, message_type) 
+           VALUES ($1, $2, $3, $4, $5) 
+           RETURNING id`,
+          [socket.username, msg, timestamp, replyToId, 'text'] 
+        );
 
-    const { text, type, replyTo, targetUser, isPrivate } = data;
-    const timestamp = Date.now();
+        const newId = result.rows[0].id;
 
-    try {
-        if (isPrivate && targetUser) {
-            // --- Lógica Privada ---
-            const insertQ = `
-              INSERT INTO direct_messages (sender, receiver, text, timestamp, message_type, reply_to_id)
-              VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
-            `;
-            const result = await db.query(insertQ, [socket.username, targetUser, text, timestamp, type, replyTo]);
-            
-            const newMsg = {
-                id: result.rows[0].id,
-                user_name: socket.username, // Para que el frontend sepa quien lo envió
-                text, timestamp,
-                message_type: type,
-                reply_to_id: replyTo,
-                isPrivate: true,
-                receiver: targetUser
-            };
-
-            // Enviar a ambos usuarios (remitente y destinatario)
-            // Usamos io.to(username) porque al loguearse se unieron a esa sala
-            io.to(socket.username).to(targetUser).emit('private message incoming', newMsg);
-
-        } else {
-            // --- Lógica Global ---
-            const insertQ = `
-              INSERT INTO messages (user_name, text, timestamp, message_type, reply_to_id)
-              VALUES ($1, $2, $3, $4, $5) RETURNING id
-            `;
-            const result = await db.query(insertQ, [socket.username, text, timestamp, type, replyTo]);
-            
-            const newMsg = {
-                id: result.rows[0].id,
-                user_name: socket.username,
-                text, timestamp,
-                message_type: type,
-                reply_to_id: replyTo
-            };
-            
-            // Emitir a todos (o a la sala global_room si prefieres aislarlo más)
-            io.emit('chat message', newMsg);
-        }
-    } catch (err) {
-        console.error("Error guardando mensaje:", err);
+        const data = { 
+          id: newId,
+          user: socket.username, 
+          text: msg, 
+          timestamp: timestamp,
+          reply_to_id: replyToId,
+          type: 'text' 
+        };
+        
+        io.emit('chat message', data);
+      } catch (err) {
+        console.error('Error al guardar mensaje:', err);
+      }
     }
-  });
-
-  // 4. Typing
-  socket.on('user typing', () => {
-     // Esto lo simplificamos: broadcast global para no complicar el ejemplo,
-     // idealmente debería ser por sala.
-     socket.broadcast.emit('user typing', socket.username);
   });
   
-  socket.on('user stop typing', () => {
-     socket.broadcast.emit('user stop typing', socket.username);
+  // 3. Evento para Enviar Imagen
+  socket.on('chat image', async (imageData, replyToId) => {
+    if (socket.username && imageData && imageData.startsWith('data:image')) {
+      const timestamp = Math.floor(Date.now() / 1000);
+
+      try {
+        // La imagen Base64 se guarda en la columna 'text'
+        const result = await db.query(
+          `INSERT INTO messages (user_name, text, timestamp, reply_to_id, message_type) 
+           VALUES ($1, $2, $3, $4, $5) 
+           RETURNING id`,
+          [socket.username, imageData, timestamp, replyToId, 'image'] 
+        );
+
+        const newId = result.rows[0].id;
+        const data = { 
+          id: newId,
+          user: socket.username, 
+          text: imageData, // El string Base64
+          timestamp: timestamp,
+          reply_to_id: replyToId,
+          type: 'image' 
+        };
+        
+        io.emit('chat message', data);
+      } catch (err) {
+        console.error('Error al guardar imagen:', err);
+      }
+    }
   });
 
-  // 5. Borrar Mensaje
-  socket.on('delete message', async (messageId) => {
-     // Nota: Para simplificar, este script borra solo de la tabla global. 
-     // Deberías añadir lógica extra si quieres borrar privados también.
-     try {
-        const check = await db.query('SELECT user_name FROM messages WHERE id = $1', [messageId]);
-        if(check.rows.length > 0 && check.rows[0].user_name === socket.username) {
-            await db.query('DELETE FROM messages WHERE id = $1', [messageId]);
-            io.emit('message deleted', messageId);
-        }
-     } catch(e) { console.error(e); }
+
+  // 4. Eventos de Escritura
+  socket.on('typing', () => {
+    if (socket.username) {
+      socket.broadcast.emit('user typing', socket.username);
+    }
+  });
+  socket.on('stop typing', () => {
+    if (socket.username) {
+      socket.broadcast.emit('user stop typing', socket.username);
+    }
   });
 
-  // 6. Limpiar Chat (Solo Global por seguridad)
-  socket.on('clear chat request', async () => {
-      await db.query('DELETE FROM messages');
-      io.emit('chat cleared');
-  });
-
-  // 7. Desconexión
+  // 5. Evento de Desconexión
   socket.on('disconnect', () => {
     if (socket.username) {
+      console.log(`❌ ${socket.username} se ha desconectado.`);
       onlineUsers.delete(socket.username);
       io.emit('update user list', Array.from(onlineUsers));
       io.emit('system message', `${socket.username} se ha marchado.`);
+      socket.broadcast.emit('user stop typing', socket.username);
     }
   });
+
+  // 6. Evento para Eliminar un Mensaje
+  socket.on('delete message', async (messageId) => {
+    if (!socket.username) return;
+
+    try {
+      const msgResult = await db.query(
+        `SELECT user_name FROM messages WHERE id = $1`, 
+        [messageId]
+      );
+      
+      // Solo permite borrar si es el autor
+      if (msgResult.rows.length > 0 && msgResult.rows[0].user_name === socket.username) {
+        await db.query(`DELETE FROM messages WHERE id = $1`, [messageId]);
+        io.emit('message deleted', messageId);
+      }
+    } catch (err) {
+      console.error('Error al borrar mensaje:', err);
+    }
+  });
+
+  // 7. Evento para Limpiar el Chat
+  socket.on('clear chat request', async () => {
+    if (socket.username) {
+      console.log(`El usuario ${socket.username} ha solicitado limpiar el chat.`);
+      try {
+        await db.query(`DELETE FROM messages`);
+        console.log('Historial de chat borrado.');
+        io.emit('chat cleared'); 
+        io.emit('system message', `${socket.username} ha borrado el historial del chat.`);
+      } catch (err) {
+        console.error('Error al borrar mensajes:', err);
+      }
+    }
+  });
+
 });
 
-// Arrancar
-setupDatabase().then(() => {
-  server.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  });
+// ---- Iniciar el servidor ----
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
 });
