@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>DRACULA CHAT // COMPLETE</title>
+  <title>DRACULA CHAT // FINAL COMPLETE</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      /* --- PALETA DRÁCULA --- */
+      /* --- PALETA DE COLORES DRÁCULA --- */
       --bg-dark: #282a36; 
       --bg-panel: #44475a; 
       --bg-sidebar: #21222c;
@@ -20,7 +20,7 @@
       --red: #ff5555;      
       --yellow: #f1fa8c;
       --cyan: #8be9fd;
-      --offline: #6272a4; /* Color para usuarios offline */
+      --offline: #6272a4; /* Color gris para usuarios offline */
     }
 
     * { box-sizing: border-box; }
@@ -32,27 +32,31 @@
       font-family: 'Inter', sans-serif;
       height: 100dvh; /* Altura dinámica para móviles */
       width: 100vw;
-      overflow: hidden; /* Evita el doble scroll */
+      overflow: hidden; /* Previene el scroll en el body */
       display: flex;
     }
 
-    /* === LAYOUT PRINCIPAL === */
+    /* =========================================
+       LAYOUT PRINCIPAL
+       ========================================= */
     #app-layout {
       display: flex;
       width: 100%; 
       height: 100%;
     }
     
-    /* === SIDEBAR (IZQUIERDA) === */
+    /* =========================================
+       SIDEBAR (IZQUIERDA)
+       ========================================= */
     .sidebar {
         width: 260px; 
-        flex-shrink: 0; /* Fijo, no se encoge */
+        flex-shrink: 0; /* Importante: no permitir que se encoja */
         background: var(--bg-sidebar);
         border-right: 1px solid rgba(255,255,255,0.1);
         display: flex; 
         flex-direction: column;
         padding: 1rem;
-        overflow-y: auto;
+        overflow-y: auto; /* Scroll propio si hay muchos usuarios */
         z-index: 20;
         transition: transform 0.3s ease;
     }
@@ -74,7 +78,7 @@
     .nav-item:hover { background: var(--bg-panel); color: #fff; }
     .nav-item.active { background: var(--bg-panel); color: var(--purple); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     
-    /* Avatar con punto de estado */
+    /* Estilos del Avatar y punto de estado */
     .avatar-box { position: relative; width: 28px; height: 28px; }
     .nav-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 1px solid var(--comment); }
     
@@ -86,20 +90,26 @@
     .status-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
     .status-dot.off { background: var(--offline); }
 
-    .unread-badge { margin-left: auto; background: var(--red); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: none; }
+    .unread-badge { 
+        margin-left: auto; background: var(--red); color: white; 
+        padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; 
+        font-weight: bold; display: none; 
+    }
 
-    /* === CHAT AREA (DERECHA) === */
+    /* =========================================
+       CHAT AREA (DERECHA)
+       ========================================= */
     .chat-container {
-      flex: 1; /* Ocupa el resto del espacio */
+      flex: 1; /* Ocupa todo el espacio restante */
       display: flex; 
       flex-direction: column;
       height: 100%;
       position: relative;
       background: var(--bg-dark);
-      min-width: 0; /* Evita desbordamiento */
+      min-width: 0; /* Previene desbordamiento de flex */
     }
 
-    /* CABECERA */
+    /* CABECERA DEL CHAT */
     header {
       height: 60px; flex-shrink: 0;
       border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -112,7 +122,7 @@
     /* ZONA DE MENSAJES (SCROLL) */
     #messages-wrapper {
       flex-grow: 1; 
-      overflow-y: auto; /* Scroll aquí */
+      overflow-y: auto; /* El scroll ocurre aquí dentro */
       min-height: 0; 
       padding: 20px;
       display: flex; flex-direction: column;
@@ -122,10 +132,10 @@
     #messages-list {
       display: flex; flex-direction: column; gap: 16px;
       margin: 0; padding: 0; list-style: none;
-      margin-top: auto; /* Empuja mensajes abajo */
+      margin-top: auto; /* Empuja los mensajes hacia abajo si hay pocos */
     }
 
-    /* ESTILOS DE MENSAJE */
+    /* ESTILOS DE MENSAJE INDIVIDUAL */
     .msg-row { display: flex; gap: 12px; animation: fadeIn 0.2s ease-out; max-width: 100%; }
     .msg-row.me { flex-direction: row-reverse; }
     
@@ -156,7 +166,7 @@
 
     /* ZONA DE INPUT (FIJA ABAJO) */
     .input-container {
-      flex-shrink: 0;
+      flex-shrink: 0; /* No encoger */
       padding: 15px 20px;
       border-top: 1px solid rgba(255,255,255,0.1);
       background: var(--bg-dark);
@@ -165,8 +175,9 @@
 
     #reply-bar {
         background: var(--bg-panel); padding: 8px 15px; border-radius: 8px 8px 0 0;
-        margin-bottom: -5px; display: none; justify-content: space-between; align-items: center;
-        font-size: 0.85rem; color: #ddd; border-left: 4px solid var(--purple);
+        margin-bottom: -5px; display: none; justify-content: space-between; 
+        font-size: 0.8rem; border-left: 4px solid var(--purple); 
+        color: #ccc;
     }
 
     #chat-form { display: flex; gap: 12px; align-items: flex-end; }
@@ -201,7 +212,7 @@
     .profile-item:hover { transform: translateY(-10px); }
     .profile-img { width: 90px; height: 90px; border-radius: 50%; border: 4px solid var(--bg-panel); padding: 2px; object-fit: cover; }
     
-    /* RESPONSIVE MOBILE */
+    /* RESPONSIVE PARA MÓVIL */
     @media (max-width: 768px) {
         .sidebar { position: absolute; height: 100%; width: 85%; box-shadow: 10px 0 30px rgba(0,0,0,0.8); transform: translateX(-100%); }
         .sidebar.open { transform: translateX(0); }
@@ -249,7 +260,7 @@
             <img id="my-avatar" src="" style="width:36px; height:36px; border-radius:50%;" onerror="this.style.display='none'">
             <div style="overflow: hidden;">
                 <div id="my-name" style="font-weight:bold; font-size:0.95rem; white-space:nowrap;">...</div>
-                <div style="font-size:0.7rem; color:var(--green);">● En línea</div>
+                <div style="font-size:0.75rem; color:var(--green);">● En línea</div>
             </div>
         </div>
     </aside>
@@ -267,8 +278,8 @@
         </div>
 
         <div class="input-container">
-            <div id="reply-bar">
-                <span>Respondiendo a <strong id="reply-to-user" style="color:var(--purple)">...</strong></span>
+            <div id="reply-ui">
+                <span>Respondiendo a <strong id="reply-to" style="color:var(--purple)">...</strong></span>
                 <span onclick="cancelReply()" style="cursor:pointer; color:var(--red); font-weight:bold;">✕</span>
             </div>
             
@@ -288,14 +299,14 @@
   <script>
     const socket = io();
 
-    // Estado
+    // Variables de Estado
     let me = '';
     let currentChat = 'global'; 
     let replyId = null;
     let unread = {};
     let typingTimer;
 
-    // Referencias DOM
+    // Referencias al DOM
     const els = {
         login: document.getElementById('login-screen'),
         sidebar: document.getElementById('sidebar'),
@@ -305,13 +316,15 @@
         msgWrapper: document.getElementById('messages-wrapper'),
         form: document.getElementById('chat-form'),
         input: document.getElementById('msg-input'),
-        replyBar: document.getElementById('reply-bar'),
-        replyUser: document.getElementById('reply-to-user'),
+        replyBar: document.getElementById('reply-ui'),
+        replyUser: document.getElementById('reply-to'),
         typing: document.getElementById('typing'),
         btnGlobal: document.getElementById('btn-global')
     };
 
-    // --- 1. LOGIN ---
+    // ======================================================
+    // 1. GESTIÓN DE LOGIN
+    // ======================================================
     window.tryLogin = (user) => {
         socket.emit('login', user);
     };
@@ -325,13 +338,15 @@
         switchChat('global');
     });
 
-    // --- 2. CAMBIO DE CHAT ---
+    // ======================================================
+    // 2. GESTIÓN DE CHATS Y CANALES
+    // ======================================================
     window.switchChat = (target) => {
         currentChat = target;
         els.msgList.innerHTML = ''; 
         cancelReply();
         
-        // UI Updates
+        // Actualizar UI Sidebar (clase .active)
         els.btnGlobal.classList.toggle('active', target === 'global');
         document.querySelectorAll('.nav-item[data-user]').forEach(el => {
             const isTarget = el.dataset.user === target;
@@ -342,29 +357,33 @@
             }
         });
 
-        document.getElementById('chat-title').textContent = target === 'global' ? 'GLOBAL' : target;
+        // Cambiar título y pedir historial
+        els.chatTitle.textContent = target === 'global' ? 'GLOBAL' : target;
         socket.emit('join_chat', { target });
         
-        // Móvil: cerrar sidebar
+        // Cerrar sidebar en móvil
         if(window.innerWidth < 768) els.sidebar.classList.remove('open');
     };
 
-    // --- 3. RECIBIR MENSAJES ---
+    // ======================================================
+    // 3. RECEPCIÓN DE MENSAJES
+    // ======================================================
     socket.on('chat_message', (msg) => {
         let render = false;
         
         if(msg.isPrivate) {
-            // Verificar si el mensaje pertenece al chat actual
+            // Determinar si el mensaje pertenece al chat abierto actual
             const other = (msg.user === me) ? msg.receiver : msg.user;
             
             if(currentChat === other) {
-                render = true;
+                render = true; // Estoy viendo este chat
             } else if(msg.user !== me) {
-                // Si no estoy en el chat, mostrar notificación
+                // Mensaje de otro en chat cerrado -> Notificación
                 unread[other] = (unread[other]||0) + 1;
                 updateUserList();
             }
         } else {
+            // Mensaje Global
             if(currentChat === 'global') render = true;
         }
 
@@ -374,7 +393,6 @@
         }
     });
 
-    // --- 4. HISTORIAL ---
     socket.on('chat_history', ({ history, context }) => {
         if(currentChat === context) {
             els.msgList.innerHTML = '';
@@ -383,9 +401,11 @@
         }
     });
 
-    // --- 5. LISTA DE USUARIOS ---
+    // ======================================================
+    // 4. LISTA DE USUARIOS (Sidebar)
+    // ======================================================
     socket.on('update_user_list', (users) => {
-        window.usersCache = users; 
+        window.usersCache = users; // Cacheamos la lista
         updateUserList();
     });
 
@@ -409,7 +429,9 @@
         }).join('');
     }
 
-    // --- 6. RENDERIZADO MENSAJES ---
+    // ======================================================
+    // 5. RENDERIZADO DE MENSAJES
+    // ======================================================
     function addMsg(msg) {
         const li = document.createElement('li');
         const isMe = msg.user === me;
@@ -417,8 +439,13 @@
         li.id = `msg-${msg.id}`;
 
         let content = '';
-        if(msg.replyTo) content += `<div style="font-size:0.7rem;opacity:0.7;border-left:2px solid #fff;padding-left:5px;margin-bottom:5px">Respuesta...</div>`;
         
+        // Si es respuesta, mostramos indicador
+        if(msg.replyTo) {
+            content += `<div style="font-size:0.7rem;opacity:0.7;border-left:2px solid #fff;padding-left:5px;margin-bottom:5px">Respuesta...</div>`;
+        }
+        
+        // Contenido según tipo (imagen o texto)
         if(msg.type === 'image') {
             content += `<img src="${msg.text}" class="msg-img" onclick="window.open(this.src)">`;
         } else {
@@ -442,25 +469,31 @@
         els.msgList.appendChild(li);
     }
 
-    // --- 7. EVENTOS FORMULARIO ---
+    // ======================================================
+    // 6. EVENTOS DE FORMULARIO Y UTILIDADES
+    // ======================================================
+    
+    // Enviar Mensaje
     els.form.onsubmit = (e) => {
         e.preventDefault();
-        const input = document.getElementById('msg-input');
-        const text = input.value.trim();
+        const text = els.input.value.trim();
         if(!text) return;
         
         if(text === '/clear') socket.emit('clear_chat');
         else socket.emit('chat_message', {
-            text: text, type: 'text', replyTo: replyId, 
+            text: text, 
+            type: 'text', 
+            replyTo: replyId, 
             target: currentChat
         });
 
-        input.value = '';
-        input.style.height = 'auto';
+        els.input.value = '';
+        els.input.style.height = 'auto';
         cancelReply();
         socket.emit('stop_typing');
     };
 
+    // Responder
     window.reply = (id, user) => {
         replyId = id;
         els.replyBar.style.display = 'flex';
@@ -472,15 +505,19 @@
         els.replyBar.style.display = 'none';
     };
 
-    window.delMsg = (id) => { if(confirm('¿Borrar?')) socket.emit('delete_message', id); };
+    // Borrar
+    window.delMsg = (id) => { if(confirm('¿Borrar este mensaje?')) socket.emit('delete_message', id); };
     socket.on('message_deleted', id => { const el=document.getElementById(`msg-${id}`); if(el) el.remove(); });
     socket.on('chat_cleared', () => els.msgList.innerHTML = '');
+    
+    // Sistema
     socket.on('system_message', t => {
         const li=document.createElement('li'); 
         li.textContent=t; li.style.cssText="text-align:center;color:var(--yellow);font-size:0.8rem;margin:10px 0;";
         els.msgList.appendChild(li);
     });
 
+    // Subir Archivo
     window.uploadFile = () => {
         const f = document.getElementById('file-input').files[0];
         if(f) {
@@ -497,18 +534,22 @@
         }
     };
 
+    // Scroll al fondo
     function scrollToBottom() {
         els.msgWrapper.scrollTop = els.msgWrapper.scrollHeight;
     }
 
+    // Auto-crecimiento textarea
     els.input.addEventListener('input', function(){
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
+        
         socket.emit('typing');
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => socket.emit('stop_typing'), 1000);
     });
 
+    // Typing indicator
     socket.on('user_typing', (u) => { 
         if(u !== me && (currentChat === 'global' || currentChat === u)) {
             document.getElementById('typing').textContent = `${u} escribe...`;
@@ -516,7 +557,7 @@
     });
     socket.on('user_stop_typing', () => { document.getElementById('typing').textContent = ''; });
 
-    // Menu móvil
+    // Menú móvil
     document.getElementById('mobile-menu').onclick = () => els.sidebar.classList.toggle('open');
 
 </script>
