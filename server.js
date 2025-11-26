@@ -8,16 +8,14 @@ const { Pool } = require('pg');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
-  // Mantenemos el buffer alto para imágenes
+  // Aumentar límite para imágenes grandes (50MB)
   maxHttpBufferSize: 50 * 1024 * 1024, 
   transports: ['websocket'], 
   upgrade: false 
 });
 const PORT = process.env.PORT || 3000; 
 
-// ---- Listas de usuarios ----
-// (Mantenemos tu lista original)
-const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Álvaro'];
+// ---- Estado ----
 const onlineUsers = new Set();
 
 // ---- Configuración de Base de Datos (PostgreSQL) ----
@@ -30,7 +28,7 @@ async function setupDatabase() {
   try {
     console.log('--- Iniciando configuración de Base de Datos ---');
     
-    // 1. Tabla mensajes globales (ORIGINAL)
+    // 1. Tabla mensajes globales
     await db.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -42,8 +40,7 @@ async function setupDatabase() {
       );
     `);
 
-    // 2. Tabla Mensajes Privados (AÑADIDA)
-    // Separada para no corromper la lógica del chat global
+    // 2. Tabla Mensajes Privados
     await db.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
         id SERIAL PRIMARY KEY,
@@ -56,7 +53,7 @@ async function setupDatabase() {
       );
     `);
     
-    // Asegurar columnas (Parches de compatibilidad)
+    // Parches de compatibilidad por si la tabla ya existía sin la columna tipo
     try { await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`); } catch(e){}
     try { await db.query(`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`); } catch(e){}
 
@@ -78,47 +75,47 @@ io.on('connection', (socket) => {
   console.log(`Cliente conectado ID: ${socket.id}`);
 
   // 1. LOGIN
-  socket.on('login', async (username, callback) => {
-    if (allowedUsers.includes(username)) {
-      socket.username = username;
-      onlineUsers.add(username);
-      
-      // CRITICO: Unir al usuario a una sala con su propio nombre
-      // Esto permite enviarle mensajes privados usando io.to(nombre)
-      socket.join(username);
+  // Usamos un callback para confirmar al cliente que el login fue exitoso
+  socket.on('login', (username, callback) => {
+    if (!username) return;
 
-      // Respuesta al cliente
-      if (typeof callback === 'function') callback(true);
-      
-      io.emit('update user list', Array.from(onlineUsers));
-      io.emit('system message', `${username} se ha unido al servidor.`);
-    } else {
-      if (typeof callback === 'function') callback(false);
+    socket.username = username;
+    onlineUsers.add(username);
+    
+    // Unir al usuario a una sala con su propio nombre (para recibir DMs)
+    socket.join(username);
+
+    // Confirmar al cliente
+    if (typeof callback === 'function') {
+        callback({ status: 'ok', username: username });
     }
+    
+    // Notificar a todos
+    io.emit('update user list', Array.from(onlineUsers));
+    io.emit('system message', `${username} se ha unido.`);
   });
 
-  // 2. UNIRSE A CHAT / CAMBIAR CANAL (Corrección de Bug de Historial)
+  // 2. UNIRSE A CHAT / PEDIR HISTORIAL
   socket.on('join chat', async ({ target, type }) => {
     if (!socket.username) return;
 
-    // Límite de tiempo (2 semanas) para no saturar
+    // Límite de tiempo (2 semanas)
     const timeLimit = Math.floor(Date.now() / 1000) - 1209600;
     
     try {
         let messages = [];
 
         if (type === 'global') {
-            // --- Carga Historial GLOBAL ---
-            // Usamos SELECT * para evitar error "undefined column" con alias
+            // --- Historial GLOBAL ---
             const res = await db.query(
                 `SELECT * FROM messages WHERE timestamp > $1 ORDER BY id ASC`, 
                 [timeLimit]
             );
             
-            // Mapeo manual en JS (Más seguro que SQL complex aliases)
+            // Mapeamos los datos para el frontend
             messages = res.rows.map(row => ({
                 id: row.id,
-                user: row.user_name, // Mapeamos user_name -> user
+                user: row.user_name,
                 text: row.text,
                 timestamp: row.timestamp,
                 reply_to_id: row.reply_to_id,
@@ -127,8 +124,8 @@ io.on('connection', (socket) => {
             }));
 
         } else if (type === 'private') {
-            // --- Carga Historial PRIVADO ---
-            // Trae mensajes donde YO soy emisor O receptor con el TARGET
+            // --- Historial PRIVADO ---
+            // Mensajes donde YO soy emisor O receptor con el TARGET
             const res = await db.query(
                 `SELECT * FROM direct_messages 
                  WHERE timestamp > $1 
@@ -139,7 +136,7 @@ io.on('connection', (socket) => {
 
             messages = res.rows.map(row => ({
                 id: row.id,
-                user: row.sender, // Para el front, 'user' es quien lo envió
+                user: row.sender, 
                 text: row.text,
                 timestamp: row.timestamp,
                 reply_to_id: row.reply_to_id,
@@ -149,7 +146,7 @@ io.on('connection', (socket) => {
             }));
         }
         
-        // Enviamos el historial limpio y el contexto para que el front sepa qué pintar
+        // Enviamos historial y contexto
         socket.emit('chat history', { messages, context: target || 'global' });
 
     } catch (err) {
@@ -157,15 +154,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 3. ENVIAR MENSAJE (Texto)
-  socket.on('chat message', async (textData, replyToId, targetUser) => {
+  // 3. ENVIAR MENSAJE DE TEXTO
+  socket.on('chat message', async (text, replyToId, targetUser) => {
     if (!socket.username) return;
     const ts = Math.floor(Date.now() / 1000);
-    const text = textData; // Aseguramos que sea string
 
     try {
         if (targetUser && targetUser !== 'global') {
-            // --- LÓGICA PRIVADA ---
+            // --- MENSAJE PRIVADO ---
             const res = await db.query(
                 `INSERT INTO direct_messages (sender, receiver, text, timestamp, reply_to_id, message_type) VALUES ($1, $2, $3, $4, $5, 'text') RETURNING id`,
                 [socket.username, targetUser, text, ts, replyToId]
@@ -178,11 +174,11 @@ io.on('connection', (socket) => {
                 type: 'text', isPrivate: true, receiver: targetUser 
             };
             
-            // Enviar a MI MISMO y al DESTINATARIO
+            // Enviar a las salas de ambos usuarios
             io.to(socket.username).to(targetUser).emit('chat message', packet);
 
         } else {
-            // --- LÓGICA GLOBAL (Original) ---
+            // --- MENSAJE GLOBAL ---
             const res = await db.query(
                 `INSERT INTO messages (user_name, text, timestamp, reply_to_id, message_type) VALUES ($1, $2, $3, $4, 'text') RETURNING id`,
                 [socket.username, text, ts, replyToId]
@@ -230,15 +226,13 @@ io.on('connection', (socket) => {
   socket.on('delete message', async (id) => {
       if(!socket.username) return;
       try {
-        // Intentamos borrar de ambas tablas validando el usuario
         await db.query(`DELETE FROM messages WHERE id=$1 AND user_name=$2`, [id, socket.username]);
         await db.query(`DELETE FROM direct_messages WHERE id=$1 AND sender=$2`, [id, socket.username]);
-        
         io.emit('message deleted', id);
       } catch(e) { console.error(e); }
   });
 
-  // 6. LIMPIAR CHAT (Solo afecta a Global para seguridad)
+  // 6. LIMPIAR CHAT (Solo global)
   socket.on('clear chat request', async () => {
       if(!socket.username) return;
       await db.query('DELETE FROM messages');
@@ -246,7 +240,7 @@ io.on('connection', (socket) => {
       io.emit('system message', `${socket.username} ha limpiado el chat global.`);
   });
 
-  // 7. EVENTOS DE ESCRITURA Y DESCONEXIÓN
+  // 7. EVENTOS VARIOS
   socket.on('typing', () => socket.broadcast.emit('user typing', socket.username));
   socket.on('stop typing', () => socket.broadcast.emit('user stop typing', socket.username));
   

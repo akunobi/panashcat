@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* --- PALETA DRÁCULA ORIGINAL --- */
+      /* --- PALETA DRÁCULA --- */
       --dracula-bg: #282a36; 
       --dracula-fg: #f8f8f2; 
       --dracula-selection: #44475a;  
@@ -31,7 +31,7 @@
       color: var(--dracula-fg);
       font-family: 'Inter', sans-serif;
       height: 100vh; width: 100vw;
-      overflow: hidden; /* IMPORTANTE: Previene scroll doble en móvil */
+      overflow: hidden; /* IMPORTANTE: Previene scroll del body completo */
       display: flex;
     }
 
@@ -39,7 +39,7 @@
     #app-layout {
       width: 100%; height: 100%;
       display: grid;
-      grid-template-columns: 260px 1fr; /* Columna Sidebar | Columna Chat */
+      grid-template-columns: 260px 1fr; /* Sidebar | Chat */
       background: var(--dracula-bg);
     }
     
@@ -74,8 +74,8 @@
     .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 5px var(--green); }
     .unread-badge { margin-left: auto; background: var(--red); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: none; }
 
-    /* === CHAT CONTAINER (FLEX) === */
-    /* Esta estructura arregla el bug del scroll y del input oculto */
+    /* === CHAT CONTAINER (FLEX FIX) === */
+    /* Solución definitiva al bug de scroll e input oculto */
     .chat-container {
       display: flex; flex-direction: column;
       height: 100%;
@@ -109,7 +109,7 @@
       margin-top: auto; /* Empuja mensajes hacia abajo si hay pocos */
     }
 
-    /* Estilos Mensajes (Originales) */
+    /* Estilos Mensajes */
     .msg-row { display: flex; gap: 12px; animation: fadeIn 0.2s ease-out; max-width: 100%; }
     .msg-row.me { flex-direction: row-reverse; }
     
@@ -200,10 +200,22 @@
       <h1 style="color:var(--purple); margin:0; font-size: 2.5rem; letter-spacing: 2px;">DRACULA CHAT</h1>
       <p style="color:var(--dracula-comment); margin-top: 10px;">Selecciona tu identidad</p>
       <div class="profiles-grid">
-          <div class="profile-item" onclick="login('Rafa')"><img src="/images/Rafa.png" onerror="this.src='https://ui-avatars.com/api/?name=Rafa&background=bd93f9&color=fff'" class="profile-img"><div>Rafa</div></div>
-          <div class="profile-item" onclick="login('Hugo')"><img src="/images/Hugo.png" onerror="this.src='https://ui-avatars.com/api/?name=Hugo&background=50fa7b&color=fff'" class="profile-img"><div>Hugo</div></div>
-          <div class="profile-item" onclick="login('Sergio')"><img src="/images/Sergio.png" onerror="this.src='https://ui-avatars.com/api/?name=Sergio&background=ff5555&color=fff'" class="profile-img"><div>Sergio</div></div>
-          <div class="profile-item" onclick="login('Álvaro')"><img src="/images/Álvaro.png" onerror="this.src='https://ui-avatars.com/api/?name=Alvaro&background=8be9fd&color=fff'" class="profile-img"><div>Álvaro</div></div>
+          <div class="profile-item" onclick="login('Rafa')">
+              <img src="/images/Rafa.png" onerror="this.src='https://ui-avatars.com/api/?name=Rafa&background=bd93f9&color=fff'" class="profile-img">
+              <div style="margin-top:10px; font-weight:bold;">Rafa</div>
+          </div>
+          <div class="profile-item" onclick="login('Hugo')">
+              <img src="/images/Hugo.png" onerror="this.src='https://ui-avatars.com/api/?name=Hugo&background=50fa7b&color=fff'" class="profile-img">
+              <div style="margin-top:10px; font-weight:bold;">Hugo</div>
+          </div>
+          <div class="profile-item" onclick="login('Sergio')">
+              <img src="/images/Sergio.png" onerror="this.src='https://ui-avatars.com/api/?name=Sergio&background=ff5555&color=fff'" class="profile-img">
+              <div style="margin-top:10px; font-weight:bold;">Sergio</div>
+          </div>
+          <div class="profile-item" onclick="login('Álvaro')">
+              <img src="/images/Álvaro.png" onerror="this.src='https://ui-avatars.com/api/?name=Alvaro&background=8be9fd&color=fff'" class="profile-img">
+              <div style="margin-top:10px; font-weight:bold;">Álvaro</div>
+          </div>
       </div>
   </div>
 
@@ -257,21 +269,20 @@
             </form>
         </div>
     </main>
-
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
-    // Estado de la aplicación
+    // Estado
     let myUser = '';
     let activeChat = 'global'; 
     let replyId = null;
     let unread = {};
     let typingTimer;
 
-    // Referencias al DOM
+    // Elementos DOM
     const els = {
         login: document.getElementById('login-screen'),
         sidebar: document.getElementById('sidebar'),
@@ -288,10 +299,11 @@
         btnGlobal: document.getElementById('btn-global')
     };
 
-    // --- 1. LOGIN ---
+    // --- 1. LOGIN (Corrección con Callback) ---
     window.login = (user) => {
-        socket.emit('login', user, (success) => {
-            if(success) {
+        // Solicitamos login y esperamos confirmación
+        socket.emit('login', user, (response) => {
+            if(response && response.status === 'ok') {
                 myUser = user;
                 document.getElementById('my-name').textContent = user;
                 
@@ -309,28 +321,27 @@
         });
     };
 
-    // --- 2. CAMBIAR DE CHAT (Core Logic) ---
+    // --- 2. CAMBIO DE CHAT ---
     window.changeChat = (target) => {
         activeChat = target;
         
-        // A. Limpiar UI
+        // Limpiar UI
         els.msgList.innerHTML = ''; 
         cancelReply();
         
-        // B. Sidebar Highlights
+        // Actualizar Sidebar
         els.btnGlobal.classList.toggle('active', target === 'global');
         document.querySelectorAll('.nav-item[data-user]').forEach(el => {
             const isTarget = el.dataset.user === target;
             el.classList.toggle('active', isTarget);
             if(isTarget) {
-                // Resetear notificaciones al entrar
                 unread[target] = 0;
                 const badge = el.querySelector('.unread-badge');
                 if(badge) badge.style.display = 'none';
             }
         });
 
-        // C. Actualizar Header y Pedir Historial
+        // Actualizar Header y Pedir Historial
         if(target === 'global') {
             els.chatTitle.textContent = 'GLOBAL';
             els.headerIcon.textContent = '#';
@@ -341,11 +352,11 @@
             socket.emit('join chat', { target: target, type: 'private' });
         }
 
-        // D. UX Móvil
+        // Móvil
         if(window.innerWidth < 768) els.sidebar.classList.remove('open');
     };
 
-    // --- 3. LISTA DE USUARIOS (Sidebar) ---
+    // --- 3. LISTA DE USUARIOS ---
     socket.on('update user list', (users) => {
         const others = users.filter(u => u !== myUser);
         els.dmList.innerHTML = others.map(u => {
@@ -361,42 +372,34 @@
         }).join('');
     });
 
-    // --- 4. ENVIAR MENSAJES ---
+    // --- 4. ENVIAR ---
     els.form.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = els.input.value.trim();
         if(!text) return;
         
-        // Comandos simples
         if(text === '/clear') socket.emit('clear chat request');
         else socket.emit('chat message', text, replyId, activeChat);
 
-        // Reset UI
         els.input.value = '';
         els.input.style.height = 'auto';
         cancelReply();
         socket.emit('stop typing');
     });
 
-    // --- 5. RECIBIR MENSAJES (Lógica de Filtrado) ---
+    // --- 5. RECIBIR ---
     socket.on('chat message', (msg) => {
         let shouldRender = false;
         
         if (msg.isPrivate) {
-            // Es Mensaje Privado
-            // Determinar quién es la "otra persona" en la conversación
             const partner = (msg.user === myUser) ? msg.receiver : msg.user;
-            
             if (activeChat === partner) {
-                // Estoy viendo este chat
                 shouldRender = true;
             } else if (msg.user !== myUser) {
-                // NO estoy viendo este chat -> Notificación
                 unread[partner] = (unread[partner] || 0) + 1;
                 updateBadge(partner);
             }
         } else {
-            // Es Mensaje Global
             if (activeChat === 'global') shouldRender = true;
         }
 
@@ -406,17 +409,15 @@
         }
     });
 
-    // Historial
     socket.on('chat history', (data) => {
-        // Validación de contexto para evitar parpadeos
         if( (activeChat === 'global' && data.context === 'global') || activeChat === data.context ) {
-            els.msgList.innerHTML = ''; // Limpiar
-            data.messages.forEach(renderMessage); // Pintar historial
+            els.msgList.innerHTML = '';
+            data.messages.forEach(renderMessage);
             scrollToBottom();
         }
     });
 
-    // --- 6. RENDERIZADO VISUAL ---
+    // --- 6. RENDERIZADO ---
     function renderMessage(msg) {
         const li = document.createElement('li');
         const isMe = msg.user === myUser;
@@ -424,21 +425,14 @@
         li.id = `msg-${msg.id}`;
 
         let content = '';
+        if(msg.reply_to_id) content += `<div style="font-size:0.75rem; opacity:0.7; border-left:3px solid rgba(255,255,255,0.3); padding-left:8px; margin-bottom:6px; font-style:italic;">Respondiendo...</div>`;
         
-        // Bloque de Respuesta
-        if(msg.reply_to_id) {
-             content += `<div style="font-size:0.75rem; opacity:0.7; border-left:3px solid rgba(255,255,255,0.3); padding-left:8px; margin-bottom:6px; font-style:italic;">Respondiendo...</div>`;
-        }
-        
-        // Contenido (Texto o Imagen)
         if(msg.type === 'image') {
             content += `<img src="${msg.text}" class="msg-img" onclick="window.open(this.src)">`;
         } else {
-            // Convertimos saltos de línea a <br>
             content += msg.text.replace(/\n/g, '<br>');
         }
 
-        // Avatares
         const avatarSrc = `/images/${msg.user}.png`;
         const fallbackSrc = `https://ui-avatars.com/api/?name=${msg.user}&background=random&color=fff`;
 
@@ -460,10 +454,7 @@
     }
 
     // --- UTILS ---
-    function scrollToBottom() {
-        // IMPORTANTE: Scrolleamos el wrapper, no la lista
-        els.msgWrapper.scrollTop = els.msgWrapper.scrollHeight;
-    }
+    function scrollToBottom() { els.msgWrapper.scrollTop = els.msgWrapper.scrollHeight; }
 
     function updateBadge(user) {
         const item = document.querySelector(`.nav-item[data-user="${user}"]`);
@@ -474,7 +465,6 @@
         }
     }
 
-    // Responder
     window.setReply = (id, user) => {
         replyId = id;
         els.replyBar.style.display = 'flex';
@@ -486,35 +476,24 @@
         els.replyBar.style.display = 'none';
     }
 
-    // Borrar
     window.deleteMsg = (id) => {
-        if(confirm('¿Quieres eliminar este mensaje?')) socket.emit('delete message', id);
+        if(confirm('¿Eliminar?')) socket.emit('delete message', id);
     }
     socket.on('message deleted', id => {
         const el = document.getElementById(`msg-${id}`);
-        if(el) {
-            el.style.opacity = '0';
-            setTimeout(() => el.remove(), 300);
-        }
+        if(el) el.remove();
     });
 
-    // Menú Móvil
-    document.getElementById('mobile-menu').onclick = () => {
-        els.sidebar.classList.toggle('open');
-    }
+    document.getElementById('mobile-menu').onclick = () => els.sidebar.classList.toggle('open');
 
-    // Auto-altura del textarea
     els.input.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
-        
-        // Typing logic
         socket.emit('typing');
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => socket.emit('stop typing'), 1000);
     });
 
-    // Subida de Imagen
     document.getElementById('file-input').onchange = function() {
         if(this.files[0]) {
             const r = new FileReader();
@@ -527,7 +506,6 @@
         this.value = '';
     }
 
-    // Notificaciones de Sistema
     socket.on('system message', txt => {
         const li = document.createElement('li');
         li.style.cssText = "text-align:center; color:var(--yellow); font-style:italic; font-size:0.8rem; margin:10px 0;";
@@ -536,11 +514,8 @@
         scrollToBottom();
     });
 
-    // Typing Status
     socket.on('user typing', (u) => { if(u !== myUser) els.typing.textContent = `${u} escribe...`; });
     socket.on('user stop typing', () => { els.typing.textContent = ''; });
-    
-    // Clear Chat
     socket.on('chat cleared', () => { els.msgList.innerHTML = ''; });
 
   </script>
