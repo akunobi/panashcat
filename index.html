@@ -822,7 +822,6 @@
                 d.type === 'private' && chatContext.type === 'private' && d.target === chatContext.target) {
                 
                 els.messages.innerHTML = '';
-                // Usamos el campo correcto que viene del backend ('user_name' para global, 'sender' para privado)
                 d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user_name || m.sender }));
             }
         });
@@ -839,7 +838,6 @@
         const typers = new Set();
         socket.on('user typing', d => {
             if (d.user === myUsername) return;
-            // Solo mostrar si es el contexto correcto
             if (d.context !== chatContext.type) return;
             if (d.context === 'private' && d.user !== chatContext.target) return;
 
@@ -866,7 +864,7 @@
                 </li>
             `).join('');
 
-            // Actualizar ambas listas y mantener el data-user para el highlight
+            // Actualizar ambas listas
             els.userListUl.innerHTML = userHtml;
             els.userListUlOverlay.innerHTML = userHtml;
             updateUserListHighlight();
@@ -875,20 +873,14 @@
         // --- 5. INITIAL CONNECTION / RECONNECT LOGIC ---
         socket.on('connect', () => {
             if (myUsername) {
-                // Reintentar login automáticamente en caso de reconexión
                 socket.emit('login', myUsername, (success) => {
                     if (success) {
                         console.log('Reconexión exitosa.');
-                        // Volver a cargar el historial del contexto actual
                         if (chatContext.type === 'global') {
                             socket.emit('get global history');
                         } else if (chatContext.target) {
                             socket.emit('get private history', chatContext.target);
                         }
-                    } else {
-                         // Si la reconexión falla, llevar al login por seguridad
-                         console.error('Fallo en la reconexión.');
-                         // No hacemos nada, el usuario podría haber sido desconectado por el servidor
                     }
                 });
             }
