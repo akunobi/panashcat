@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>DRACULA CHAT // FULL VERSION</title>
+  <title>DRACULA CHAT // COMPLETE</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      /* --- PALETA DE COLORES DRÁCULA --- */
+      /* --- PALETA DRÁCULA --- */
       --bg-dark: #282a36; 
       --bg-panel: #44475a; 
       --bg-sidebar: #21222c;
@@ -20,6 +20,7 @@
       --red: #ff5555;      
       --yellow: #f1fa8c;
       --cyan: #8be9fd;
+      --offline: #6272a4;
     }
 
     * { box-sizing: border-box; }
@@ -29,32 +30,31 @@
       background-color: var(--bg-dark);
       color: var(--fg);
       font-family: 'Inter', sans-serif;
-      height: 100dvh; /* Usamos dvh para mejor soporte móvil */
+      height: 100dvh; /* Viewport height dinámico para móviles */
       width: 100vw;
-      overflow: hidden;
+      overflow: hidden; /* Previene doble scroll */
       display: flex;
     }
 
-    /* === LAYOUT PRINCIPAL === */
+    /* === LAYOUT === */
     #app-layout {
+      display: flex;
       width: 100%; 
       height: 100%;
-      display: flex; /* Flex en lugar de grid para mejor control móvil */
-      background: var(--bg-dark);
     }
     
-    /* === SIDEBAR (IZQUIERDA) === */
+    /* === SIDEBAR === */
     .sidebar {
         width: 260px; 
-        flex-shrink: 0; /* No permitimos que se encoja */
+        flex-shrink: 0; /* No se encoge */
         background: var(--bg-sidebar);
         border-right: 1px solid rgba(255,255,255,0.1);
         display: flex; 
         flex-direction: column;
         padding: 1rem;
         overflow-y: auto;
-        transition: transform 0.3s ease;
         z-index: 20;
+        transition: transform 0.3s ease;
     }
 
     .section-title {
@@ -74,33 +74,38 @@
     .nav-item:hover { background: var(--bg-panel); color: #fff; }
     .nav-item.active { background: var(--bg-panel); color: var(--purple); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     
-    .nav-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--comment); }
+    /* AVATAR CON ESTADO */
+    .avatar-box { position: relative; width: 28px; height: 28px; }
+    .nav-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 1px solid var(--comment); }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; position: absolute; bottom: -2px; right: -2px; border: 2px solid var(--bg-sidebar); }
+    .status-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .status-dot.off { background: var(--offline); }
+
     .unread-badge { margin-left: auto; background: var(--red); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: none; }
 
-    /* === CHAT AREA (DERECHA) === */
+    /* === CHAT AREA === */
     .chat-container {
-      flex: 1; /* Ocupa el resto del espacio */
+      flex: 1; 
       display: flex; 
       flex-direction: column;
       height: 100%;
       position: relative;
       background: var(--bg-dark);
-      min-width: 0; /* Previene overflow */
+      min-width: 0; /* Fix flex overflow */
     }
 
-    /* CABECERA */
     header {
       height: 60px; flex-shrink: 0;
       border-bottom: 1px solid rgba(255,255,255,0.1);
       display: flex; align-items: center; padding: 0 20px;
       background: rgba(40, 42, 54, 0.95);
     }
-    #mobile-menu { display: none; background: none; border: none; color: white; font-size: 1.5rem; margin-right: 15px; cursor: pointer; }
+    #menu-btn { display: none; background: none; border: none; color: white; font-size: 1.5rem; margin-right: 15px; cursor: pointer; }
 
-    /* ZONA DE MENSAJES (SCROLL) */
+    /* MENSAJES (Scroll aquí) */
     #messages-wrapper {
       flex-grow: 1; 
-      overflow-y: auto; /* Scroll aquí */
+      overflow-y: auto; 
       min-height: 0; 
       padding: 20px;
       display: flex; flex-direction: column;
@@ -110,10 +115,10 @@
     #messages-list {
       display: flex; flex-direction: column; gap: 16px;
       margin: 0; padding: 0; list-style: none;
-      margin-top: auto; /* Empujar contenido abajo */
+      margin-top: auto; 
     }
 
-    /* ESTILOS DE MENSAJE INDIVIDUAL */
+    /* BURBUJAS DE MENSAJE */
     .msg-row { display: flex; gap: 12px; animation: fadeIn 0.2s ease-out; max-width: 100%; }
     .msg-row.me { flex-direction: row-reverse; }
     
@@ -142,7 +147,7 @@
     
     @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
 
-    /* ZONA DE INPUT (FIJA ABAJO) */
+    /* INPUT AREA */
     .input-container {
       flex-shrink: 0;
       padding: 15px 20px;
@@ -178,7 +183,7 @@
     .icon-btn:hover { opacity: 0.8; transform: scale(1.1); }
     .send-btn { background: var(--purple); color: #282a36; border-radius: 50%; width: 48px; height: 48px; justify-content: center; }
 
-    /* --- PANTALLA DE LOGIN --- */
+    /* LOGIN SCREEN */
     #login-screen {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: var(--bg-dark); z-index: 100;
@@ -193,7 +198,7 @@
     @media (max-width: 768px) {
         .sidebar { position: absolute; height: 100%; width: 85%; box-shadow: 10px 0 30px rgba(0,0,0,0.8); transform: translateX(-100%); }
         .sidebar.open { transform: translateX(0); }
-        #mobile-menu { display: block; }
+        #menu-btn { display: block; }
     }
   </style>
 </head>
@@ -203,20 +208,20 @@
       <h1 style="color:var(--purple); margin:0; font-size: 2.5rem; letter-spacing: 2px;">DRACULA CHAT</h1>
       <p style="color:var(--comment); margin-top: 10px;">Selecciona tu usuario</p>
       <div class="profiles-grid">
-          <div class="profile-item" onclick="startLogin('Rafa')">
-              <img src="/images/Rafa.png" onerror="this.src='https://ui-avatars.com/api/?name=Rafa&background=bd93f9&color=fff'" class="profile-img">
+          <div class="profile-item" onclick="tryLogin('Rafa')">
+              <img src="/images/Rafa.png" onerror="this.src='https://ui-avatars.com/api/?name=Rafa&background=bd93f9'" class="profile-img">
               <div style="margin-top:10px; font-weight:bold;">Rafa</div>
           </div>
-          <div class="profile-item" onclick="startLogin('Hugo')">
-              <img src="/images/Hugo.png" onerror="this.src='https://ui-avatars.com/api/?name=Hugo&background=50fa7b&color=fff'" class="profile-img">
+          <div class="profile-item" onclick="tryLogin('Hugo')">
+              <img src="/images/Hugo.png" onerror="this.src='https://ui-avatars.com/api/?name=Hugo&background=50fa7b'" class="profile-img">
               <div style="margin-top:10px; font-weight:bold;">Hugo</div>
           </div>
-          <div class="profile-item" onclick="startLogin('Sergio')">
-              <img src="/images/Sergio.png" onerror="this.src='https://ui-avatars.com/api/?name=Sergio&background=ff5555&color=fff'" class="profile-img">
+          <div class="profile-item" onclick="tryLogin('Sergio')">
+              <img src="/images/Sergio.png" onerror="this.src='https://ui-avatars.com/api/?name=Sergio&background=ff5555'" class="profile-img">
               <div style="margin-top:10px; font-weight:bold;">Sergio</div>
           </div>
-          <div class="profile-item" onclick="startLogin('Álvaro')">
-              <img src="/images/Álvaro.png" onerror="this.src='https://ui-avatars.com/api/?name=Alvaro&background=8be9fd&color=fff'" class="profile-img">
+          <div class="profile-item" onclick="tryLogin('Álvaro')">
+              <img src="/images/Álvaro.png" onerror="this.src='https://ui-avatars.com/api/?name=Alvaro&background=8be9fd'" class="profile-img">
               <div style="margin-top:10px; font-weight:bold;">Álvaro</div>
           </div>
       </div>
@@ -226,7 +231,7 @@
     
     <aside class="sidebar" id="sidebar">
         <div class="section-title">CANALES</div>
-        <div class="nav-item active" id="btn-global" onclick="switchChat('global')">
+        <div class="nav-item active" id="btn-global" onclick="openChat('global')">
             <span style="font-family:'Fira Code'; font-size:1.2rem; margin-right:5px; color: var(--cyan);">#</span> GLOBAL
         </div>
 
@@ -244,8 +249,8 @@
 
     <main class="chat-container">
         <header>
-            <button id="mobile-menu">☰</button>
-            <span id="header-icon" style="color:var(--comment); font-family:'Fira Code'; margin-right:10px;">#</span>
+            <button id="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <span style="color:var(--comment); font-family:'Fira Code'; margin-right:10px;">#</span>
             <h3 id="chat-title" style="margin:0; letter-spacing: 1px;">GLOBAL</h3>
             <span id="typing" style="margin-left:15px; font-size:0.75rem; color:var(--yellow); font-style:italic;"></span>
         </header>
@@ -283,7 +288,7 @@
     let unread = {};
     let typingTimer;
 
-    // Elementos
+    // Referencias
     const els = {
         login: document.getElementById('login-screen'),
         sidebar: document.getElementById('sidebar'),
@@ -300,28 +305,26 @@
     };
 
     // --- 1. LOGIN ---
-    window.startLogin = (user) => {
-        console.log("Iniciando login como:", user);
+    window.tryLogin = (user) => {
         socket.emit('login', user);
     };
-
+    
     socket.on('login_success', (user) => {
-        console.log("Login exitoso");
         me = user;
         els.login.style.display = 'none';
         document.getElementById('my-name').textContent = user;
         document.getElementById('my-avatar').src = `/images/${user}.png`;
         document.getElementById('my-avatar').onerror = function(){ this.src = `https://ui-avatars.com/api/?name=${user}&background=random`; };
-        switchChat('global');
+        openChat('global');
     });
 
-    // --- 2. CAMBIAR CHAT ---
-    window.switchChat = (target) => {
+    // --- 2. CAMBIO DE CHAT ---
+    window.openChat = (target) => {
         currentChat = target;
         els.msgList.innerHTML = ''; 
         cancelReply();
         
-        // UI Active States
+        // UI Updates
         els.btnGlobal.classList.toggle('active', target === 'global');
         document.querySelectorAll('.nav-item[data-user]').forEach(el => {
             const isTarget = el.dataset.user === target;
@@ -335,27 +338,47 @@
         els.chatTitle.textContent = target === 'global' ? 'GLOBAL' : target;
         socket.emit('join_chat', { target });
         
-        // Móvil: cerrar sidebar
         if(window.innerWidth < 768) els.sidebar.classList.remove('open');
     };
 
-    // --- 3. RECIBIR MENSAJES ---
-    socket.on('chat_history', ({ history, context }) => {
-        if(currentChat === context) {
-            els.msgList.innerHTML = '';
-            history.forEach(renderMessage);
-            scrollToBottom();
-        }
+    // --- 3. LISTA DE USUARIOS ---
+    socket.on('update_user_list', (users) => {
+        window.usersCache = users; // [{name, isOnline}, ...]
+        updateUserList();
     });
 
+    function updateUserList() {
+        if(!window.usersCache) return;
+        
+        els.dmList.innerHTML = window.usersCache.filter(u => u.name !== me).map(u => {
+            const count = unread[u.name] || 0;
+            const statusClass = u.isOnline ? 'on' : 'off';
+            const active = currentChat === u.name ? 'active' : '';
+            
+            return `
+            <div class="nav-item ${active}" data-user="${u.name}" onclick="openChat('${u.name}')">
+                <div class="avatar-box">
+                    <img src="/images/${u.name}.png" onerror="this.src='https://ui-avatars.com/api/?name=${u.name}&background=random'" class="nav-avatar">
+                    <div class="status-dot ${statusClass}"></div>
+                </div>
+                <span style="flex:1">${u.name}</span>
+                <span class="unread-badge" style="display:${count>0?'block':'none'}">${count}</span>
+            </div>`;
+        }).join('');
+    }
+
+    // --- 4. RECIBIR MENSAJES ---
     socket.on('chat_message', (msg) => {
         let render = false;
         
         if(msg.isPrivate) {
+            // Verificar si el mensaje pertenece al chat que tengo abierto
             const other = (msg.user === me) ? msg.receiver : msg.user;
+            
             if(currentChat === other) {
                 render = true;
             } else if(msg.user !== me) {
+                // Si no lo tengo abierto y no soy yo, contar como no leído
                 unread[other] = (unread[other]||0) + 1;
                 updateUserList();
             }
@@ -364,33 +387,22 @@
         }
 
         if(render) {
-            renderMessage(msg);
+            addMsg(msg);
             scrollToBottom();
         }
     });
 
-    // --- 4. LISTA USUARIOS ---
-    socket.on('update_user_list', (users) => {
-        window.usersCache = users; 
-        updateUserList();
+    // --- 5. HISTORIAL ---
+    socket.on('chat_history', ({ history, context }) => {
+        if(currentChat === context) {
+            els.msgList.innerHTML = '';
+            history.forEach(addMsg);
+            scrollToBottom();
+        }
     });
 
-    function updateUserList() {
-        if(!window.usersCache) return;
-        els.dmList.innerHTML = window.usersCache.filter(u => u !== me).map(u => {
-            const count = unread[u] || 0;
-            const active = currentChat === u ? 'active' : '';
-            return `
-            <div class="nav-item ${active}" data-user="${u}" onclick="switchChat('${u}')">
-                <img src="/images/${u}.png" onerror="this.src='https://ui-avatars.com/api/?name=${u}&background=random'" class="nav-avatar">
-                <span style="flex:1">${u}</span>
-                <span class="unread-badge" style="display:${count>0?'block':'none'}">${count}</span>
-            </div>`;
-        }).join('');
-    }
-
-    // --- 5. RENDERIZADO ---
-    function renderMessage(msg) {
+    // --- 6. RENDERIZADO ---
+    function addMsg(msg) {
         const li = document.createElement('li');
         const isMe = msg.user === me;
         li.className = `msg-row ${isMe ? 'me' : 'other'}`;
@@ -422,21 +434,23 @@
         els.msgList.appendChild(li);
     }
 
-    // --- 6. EVENTOS ---
+    // --- 7. EVENTOS ---
     els.form.onsubmit = (e) => {
         e.preventDefault();
-        const txt = els.input.value.trim();
-        if(!txt) return;
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if(!text) return;
         
-        if(txt === '/clear') socket.emit('clear_chat');
+        if(text === '/clear') socket.emit('clear_chat');
         else socket.emit('chat_message', {
-            text: txt, type: 'text', replyTo: replyId, 
-            target: currentChat // Clave: enviar el target correcto
+            text, type: 'text', replyTo: replyId, 
+            target: currentChat
         });
 
-        els.input.value = '';
-        els.input.style.height = 'auto';
+        input.value = '';
+        input.style.height = 'auto';
         cancelReply();
+        socket.emit('stop_typing');
     };
 
     window.reply = (id, user) => {
@@ -453,43 +467,39 @@
     window.delMsg = (id) => { if(confirm('¿Borrar?')) socket.emit('delete_message', id); };
     socket.on('message_deleted', id => { const el=document.getElementById(`msg-${id}`); if(el) el.remove(); });
     socket.on('chat_cleared', () => els.msgList.innerHTML = '');
-    socket.on('system_message', t => {
-        const li=document.createElement('li'); 
-        li.textContent=t; li.style.cssText="text-align:center;color:var(--yellow);font-size:0.8rem;";
-        els.msgList.appendChild(li);
-    });
 
-    // Extras
-    document.getElementById('mobile-menu').onclick = () => els.sidebar.classList.toggle('open');
-    
-    function scrollToBottom() { els.msgWrapper.scrollTop = els.msgWrapper.scrollHeight; }
-    
-    els.input.addEventListener('input', function(){
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-        socket.emit('typing');
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => socket.emit('stop_typing'), 1000);
-    });
-    
-    socket.on('user_typing', (u) => { if(u !== me) els.typing.textContent = `${u} escribe...`; });
-    socket.on('user_stop_typing', () => { els.typing.textContent = ''; });
-
-    // Subida de archivo
-    document.getElementById('file-input').onchange = function() {
-        if(this.files[0]) {
+    window.uploadFile = () => {
+        const f = document.getElementById('file-input').files[0];
+        if(f) {
             const r = new FileReader();
-            r.onload = (e) => {
+            r.onload = e => {
                 socket.emit('chat_message', {
                     text: e.target.result, type: 'image', replyTo: replyId,
                     target: currentChat
                 });
                 cancelReply();
             };
-            r.readAsDataURL(this.files[0]);
+            r.readAsDataURL(f);
+            document.getElementById('file-input').value = '';
         }
-        this.value = '';
     };
-  </script>
+
+    function scrollToBottom() {
+        els.msgWrapper.scrollTop = els.msgWrapper.scrollHeight;
+    }
+
+    els.input.addEventListener('input', function(){
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+        
+        socket.emit('typing');
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => socket.emit('stop_typing'), 1000);
+    });
+
+    socket.on('user_typing', (u) => { if(u !== me) els.typing.textContent = `${u} escribe...`; });
+    socket.on('user_stop_typing', () => { els.typing.textContent = ''; });
+
+</script>
 </body>
 </html>
