@@ -4,33 +4,34 @@ const path = require('path');
 const { Server } = require('socket.io');
 const { Pool } = require('pg');
 
-// 1. Configuración del Servidor
+// 1. CONFIGURACIÓN DEL SERVIDOR
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
-  maxHttpBufferSize: 50 * 1024 * 1024, // 50MB para imágenes
+  maxHttpBufferSize: 50 * 1024 * 1024, // 50MB para subida de imágenes
   transports: ['websocket', 'polling'],
   cors: { origin: "*" }
 });
 
 const PORT = process.env.PORT || 3000; 
 
-// 2. Configuración de Usuarios (Fija para que siempre aparezcan)
+// 2. LISTA DE USUARIOS Y ESTADO
+// Definimos los usuarios fijos para que aparezcan aunque estén offline
 const ALL_USERS = ['Rafa', 'Hugo', 'Sergio', 'Álvaro'];
 const onlineUsers = new Set();
 
-// 3. Base de Datos
+// 3. CONEXIÓN BASE DE DATOS
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// --- INICIALIZACIÓN DE DB ---
+// --- INICIALIZACIÓN DE BASE DE DATOS ---
 async function setupDatabase() {
   try {
-    console.log('--- Verificando Base de Datos ---');
+    console.log('--- Verificando estado de la Base de Datos ---');
     
-    // Tabla Global
+    // Tabla de Mensajes Globales
     await db.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -42,7 +43,7 @@ async function setupDatabase() {
       );
     `);
 
-    // Tabla Privada (DMs)
+    // Tabla de Mensajes Privados (DMs)
     await db.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
         id SERIAL PRIMARY KEY,
@@ -55,22 +56,22 @@ async function setupDatabase() {
       );
     `);
     
-    // Parches de seguridad por si las columnas no existen
+    // Asegurar que las columnas existan (por si la DB fue creada con versiones anteriores)
     try { await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`); } catch(e){}
     try { await db.query(`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`); } catch(e){}
 
-    console.log('✅ Base de datos lista y tablas verificadas.');
+    console.log('✅ Base de datos lista y configurada.');
   } catch (err) {
-    console.error('❌ Error fatal en DB:', err);
+    console.error('❌ Error fatal al configurar la DB:', err);
   }
 }
 setupDatabase();
 
-// Servir archivos
+// Servir archivos estáticos
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-// Función auxiliar para enviar lista de usuarios con estado
+// Función auxiliar para enviar la lista de usuarios con su estado (Online/Offline)
 function broadcastUserList() {
     const list = ALL_USERS.map(u => ({
         name: u,
@@ -87,25 +88,25 @@ io.on('connection', (socket) => {
   socket.on('login', (username) => {
     if (!username) return;
 
-    console.log(`🔑 Login solicitado: ${username}`);
+    console.log(`🔑 Usuario logueado: ${username}`);
     socket.username = username;
     
-    // Unimos al usuario a su sala personal (para recibir DMs)
+    // Unir al usuario a su propia sala (para recibir DMs)
     socket.join(username);
     onlineUsers.add(username);
     
-    // 1. Confirmamos al usuario que entró
+    // 1. Confirmar al usuario que el login fue exitoso
     socket.emit('login_success', username);
     
-    // 2. Actualizamos la lista para todos (verde/gris)
+    // 2. Actualizar la lista de usuarios para todos (para mostrar puntos verdes)
     broadcastUserList();
   });
 
-  // --- UNIRSE A CHAT (HISTORIAL) ---
+  // --- UNIRSE A UN CHAT (CARGAR HISTORIAL) ---
   socket.on('join_chat', async ({ target }) => {
     if (!socket.username) return;
     
-    // Cargar últimos 30 días
+    // Cargar mensajes de los últimos 30 días
     const limit = Math.floor(Date.now() / 1000) - (86400 * 30); 
 
     try {
@@ -117,13 +118,20 @@ io.on('connection', (socket) => {
                 `SELECT * FROM messages WHERE timestamp > $1 ORDER BY id ASC`, 
                 [limit]
             );
+            
+            // Mapeamos los datos para que el frontend los entienda fácil
             history = res.rows.map(row => ({
-                id: row.id, user: row.user_name, text: row.text, timestamp: row.timestamp,
-                reply_to_id: row.reply_to_id, message_type: row.message_type, isPrivate: false
+                id: row.id,
+                user: row.user_name,
+                text: row.text,
+                timestamp: row.timestamp,
+                replyTo: row.reply_to_id, // Normalizado
+                type: row.message_type,   // Normalizado
+                isPrivate: false
             }));
 
         } else {
-            // Historial Privado (Mensajes entre YO y TARGET)
+            // Historial Privado: Mensajes entre YO y el TARGET
             const res = await db.query(
                 `SELECT * FROM direct_messages 
                  WHERE timestamp > $1 
@@ -133,14 +141,23 @@ io.on('connection', (socket) => {
             );
 
             history = res.rows.map(row => ({
-                id: row.id, user: row.sender, text: row.text, timestamp: row.timestamp,
-                reply_to_id: row.reply_to_id, message_type: row.message_type, isPrivate: true, receiver: row.receiver
+                id: row.id,
+                user: row.sender,
+                text: row.text,
+                timestamp: row.timestamp,
+                replyTo: row.reply_to_id, // Normalizado
+                type: row.message_type,   // Normalizado
+                isPrivate: true,
+                receiver: row.receiver
             }));
         }
         
+        // Enviamos el historial al cliente
         socket.emit('chat_history', { history, context: target });
 
-    } catch (err) { console.error("Error Historial:", err); }
+    } catch (err) {
+        console.error("Error recuperando historial:", err);
+    }
   });
 
   // --- ENVIAR MENSAJE ---
@@ -150,60 +167,82 @@ io.on('connection', (socket) => {
     const { text, type, replyTo, target } = data;
     const ts = Math.floor(Date.now() / 1000);
 
-    console.log(`📩 De ${socket.username} para ${target}`);
+    console.log(`📩 Mensaje de ${socket.username} para ${target}`);
 
     try {
         if (target === 'global') {
-            // Guardar Global
+            // Guardar en Global
             const res = await db.query(
                 `INSERT INTO messages (user_name, text, timestamp, reply_to_id, message_type) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
                 [socket.username, text, ts, replyTo, type]
             );
-            const msg = { id: res.rows[0].id, user: socket.username, text, timestamp: ts, reply_to_id: replyTo, message_type: type, isPrivate: false };
+            
+            const msg = { 
+                id: res.rows[0].id, 
+                user: socket.username, 
+                text, timestamp: ts, replyTo, type, 
+                isPrivate: false 
+            };
+            
+            // Enviar a todos
             io.emit('chat_message', msg);
 
         } else {
-            // Guardar Privado
+            // Guardar en DM (Privado)
             const res = await db.query(
                 `INSERT INTO direct_messages (sender, receiver, text, timestamp, reply_to_id, message_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
                 [socket.username, target, text, ts, replyTo, type]
             );
-            const msg = { id: res.rows[0].id, user: socket.username, text, timestamp: ts, reply_to_id: replyTo, message_type: type, isPrivate: true, receiver: target };
             
-            // Enviar a la sala del REMITENTE y del DESTINATARIO
+            const msg = { 
+                id: res.rows[0].id, 
+                user: socket.username, 
+                text, timestamp: ts, replyTo, type, 
+                isPrivate: true, receiver: target 
+            };
+            
+            // Enviar a las salas de ambos (Remitente y Destinatario)
+            // Esto asegura que ambos vean el mensaje en tiempo real
             io.to(socket.username).to(target).emit('chat_message', msg);
         }
-    } catch(e) { console.error("Error Mensaje:", e); }
+    } catch(e) {
+        console.error("Error guardando mensaje:", e);
+    }
   });
 
   // --- BORRAR MENSAJE ---
   socket.on('delete_message', async (id) => {
       try {
+        // Intentar borrar de ambas tablas verificando que el usuario sea el dueño
         await db.query(`DELETE FROM messages WHERE id=$1 AND user_name=$2`, [id, socket.username]);
         await db.query(`DELETE FROM direct_messages WHERE id=$1 AND sender=$2`, [id, socket.username]);
         io.emit('message_deleted', id);
-      } catch(e) {}
+      } catch(e) { console.error(e); }
   });
 
-  // --- LIMPIAR CHAT ---
+  // --- LIMPIAR CHAT (Solo Global) ---
   socket.on('clear_chat', async () => {
       if(!socket.username) return;
       await db.query('DELETE FROM messages');
       io.emit('chat_cleared');
+      io.emit('system_message', `${socket.username} ha limpiado el chat.`);
   });
 
-  // --- ESTADOS ---
+  // --- ESTADOS (Escribiendo...) ---
   socket.on('typing', () => socket.broadcast.emit('user_typing', socket.username));
   socket.on('stop_typing', () => socket.broadcast.emit('user_stop_typing', socket.username));
   
+  // --- DESCONEXIÓN ---
   socket.on('disconnect', () => {
     if (socket.username) {
+        console.log(`❌ Usuario desconectado: ${socket.username}`);
         onlineUsers.delete(socket.username);
+        // Actualizar lista (se pondrá en gris)
         broadcastUserList();
     }
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 Servidor funcionando en puerto ${PORT}`);
+  console.log(`🚀 Servidor funcionando en el puerto ${PORT}`);
 });
