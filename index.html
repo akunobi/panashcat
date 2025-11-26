@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DRACULA CHAT // DMs</title>
+  <title>DRACULA CHAT // Final Layout</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -44,9 +44,9 @@
       background-image: radial-gradient(var(--dracula-selection) 1px, transparent 1px);
       background-size: 20px 20px;
       display: flex; justify-content: center; align-items: center; 
-      height: 100vh; 
+      height: 100vh; /* Fijo a la altura de la ventana */
       font-size: 15px;
-      overflow: hidden; 
+      overflow: hidden; /* Evita scroll en el body */
     }
 
     /* Scrollbar Global */
@@ -461,7 +461,9 @@
         } else {
             const isMe = data.user === myUsername;
             li.className = isMe ? 'me' : 'other';
-            
+            li.dataset.user = data.user;
+
+            // Construcción de la burbuja
             let contentHtml = '';
             if (data.reply_to_id) {
                 contentHtml += `<div class="reply-quote" onclick="scrollToMsg(${data.reply_to_id})">↩ Respuesta</div>`;
@@ -477,6 +479,7 @@
 
             contentHtml += `<span class="timestamp">${fmtTime(data.timestamp)}</span>`;
             
+            // Acciones
             const actions = `
                 <div class="message-actions">
                     <button class="action-btn reply-btn" data-id="${data.id}">↩</button>
@@ -486,7 +489,9 @@
 
             li.innerHTML = `
                 <div class="message-inner">
-                    <div class="avatar" style="background-image: url('${getAvatar(data.user)}')"></div>
+                    <div class="avatar-wrapper">
+                        <img class="avatar" src="${getAvatar(data.user)}">
+                    </div>
                     <div class="message-bubble">
                         ${contentHtml}
                     </div>

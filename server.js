@@ -9,7 +9,7 @@ const { Pool } = require('pg');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
-  // Aumentar el límite de payload para manejar imágenes grandes (30MB + margen)
+  // Límite de 30MB para imágenes
   maxHttpBufferSize: 30 * 1024 * 1024, 
   transports: ['websocket'], 
   upgrade: false 
@@ -43,7 +43,7 @@ async function setupDatabase() {
         message_type TEXT DEFAULT 'text'
       );
     `);
-
+    
     // 2. --- NUEVA TABLA: Mensajes Directos ---
     await db.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
@@ -98,9 +98,9 @@ io.on('connection', (socket) => {
         const history = await db.query(
           `SELECT id, user_name AS "user", text, timestamp, reply_to_id, message_type AS "type"
            FROM messages 
-           ORDER BY timestamp ASC LIMIT 100` // Limitamos para optimizar
+           ORDER BY timestamp ASC LIMIT 100`
         );
-        // Enviamos con etiqueta 'global' para que el cliente sepa dónde ponerlo
+        // Enviamos con etiqueta 'global'
         socket.emit('chat history', { type: 'global', messages: history.rows });
       } catch (e) {
         console.error('Error al consultar la DB:', e);
@@ -111,7 +111,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 2. Evento de Mensaje Global (Texto)
+  // 2. Mensajes Globales (Texto)
   socket.on('chat message', async (msg, replyToId) => {
     if (socket.username) {
       const timestamp = Math.floor(Date.now() / 1000);
@@ -121,8 +121,6 @@ io.on('connection', (socket) => {
            VALUES ($1, $2, $3, $4, 'text') RETURNING id`,
           [socket.username, msg, timestamp, replyToId]
         );
-        
-        // Emitimos con isPrivate: false
         io.emit('chat message', { 
           id: result.rows[0].id, user: socket.username, text: msg, timestamp, reply_to_id: replyToId, type: 'text', isPrivate: false 
         });
@@ -130,7 +128,7 @@ io.on('connection', (socket) => {
     }
   });
   
-  // 3. Evento de Imagen Global
+  // 3. Imágenes Globales
   socket.on('chat image', async (imageData, replyToId) => {
     if (socket.username) {
       const timestamp = Math.floor(Date.now() / 1000);
@@ -140,7 +138,6 @@ io.on('connection', (socket) => {
            VALUES ($1, $2, $3, $4, 'image') RETURNING id`,
           [socket.username, imageData, timestamp, replyToId]
         );
-        
         io.emit('chat message', { 
           id: result.rows[0].id, user: socket.username, text: imageData, timestamp, reply_to_id: replyToId, type: 'image', isPrivate: false 
         });
@@ -148,13 +145,12 @@ io.on('connection', (socket) => {
     }
   });
 
-  // --- 4. NUEVO: Evento de Mensaje Privado (Texto e Imagen unificados) ---
+  // --- 4. NUEVO: Mensajes Privados (DM) ---
   socket.on('private message', async (recipient, content, replyToId, type = 'text') => {
     if (!socket.username) return;
     const timestamp = Math.floor(Date.now() / 1000);
     
     try {
-      // Guardar en tabla direct_messages
       const result = await db.query(
         `INSERT INTO direct_messages (sender, recipient, text, timestamp, reply_to_id, message_type) 
          VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
@@ -164,28 +160,26 @@ io.on('connection', (socket) => {
       const data = {
         id: result.rows[0].id,
         user: socket.username, // Remitente
-        recipient: recipient,  // Destinatario
+        recipient: recipient,
         text: content,
         timestamp,
         reply_to_id: replyToId,
         type: type,
-        isPrivate: true // Marca importante para el frontend
+        isPrivate: true
       };
 
-      // Enviar a mí mismo (para que aparezca en mi chat)
+      // Enviar a mí mismo y al destinatario
       socket.emit('private message', data);
-      
-      // Enviar al destinatario (a su sala personal)
       io.to(recipient).emit('private message', data);
 
     } catch (e) { console.error('Error private msg:', e); }
   });
 
-  // --- 5. NUEVO: Solicitar Historial Privado ---
+  // --- 5. NUEVO: Historial Privado ---
   socket.on('get private history', async (otherUser) => {
     if (!socket.username) return;
     try {
-      // Buscar mensajes donde (Yo soy emisor Y El es receptor) O (El es emisor Y Yo soy receptor)
+      // Buscar mensajes de la conversación privada
       const res = await db.query(
         `SELECT id, sender AS "user", recipient, text, timestamp, reply_to_id, message_type AS "type"
          FROM direct_messages 
@@ -193,15 +187,13 @@ io.on('connection', (socket) => {
          ORDER BY timestamp ASC LIMIT 100`,
         [socket.username, otherUser]
       );
-      // Enviamos historial etiquetado como privado
       socket.emit('chat history', { type: 'private', target: otherUser, messages: res.rows });
     } catch (e) { console.error(e); }
   });
 
-  // 6. Typing (Actualizado para soportar contextos)
+  // 6. Eventos de Escritura (Contextual)
   socket.on('typing', (target) => {
     if (!socket.username) return;
-    // Si target es 'global', emitir a todos. Si es un usuario, emitir a su sala.
     if (target === 'global') {
         socket.broadcast.emit('user typing', { user: socket.username, context: 'global' });
     } else {
@@ -218,7 +210,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 7. Eliminar Mensaje (Actualizado para soportar tablas privadas)
+  // 7. Eliminar Mensaje (Soporta tablas privadas)
   socket.on('delete message', async (id, isPrivate) => {
     if (!socket.username) return;
     
@@ -229,7 +221,6 @@ io.on('connection', (socket) => {
       const check = await db.query(`SELECT ${userCol} FROM ${table} WHERE id = $1`, [id]);
       if (check.rows.length > 0 && check.rows[0][userCol] === socket.username) {
         await db.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
-        // Simplificación: emitimos a todos el ID borrado. El cliente verificará si lo tiene en pantalla.
         io.emit('message deleted', id); 
       }
     } catch (e) { console.error(e); }
