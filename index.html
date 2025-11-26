@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DRACULA CHAT // Final Layout</title>
+  <title>DRACULA CHAT // FINAL</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -27,626 +27,881 @@
       --text-secondary: var(--dracula-comment);
       
       --accent: var(--purple); 
-      --accent-hover: var(--cyan);
-      
-      --font-body: 'Inter', sans-serif;
-      --font-code: 'Fira Code', monospace;
-      
-      --radius-bubble: 18px;
-      --radius-panel: 24px;
+      --accent-hover: var(--pink); /* Color de hover */
+
+      /* Dimensiones */
+      --header-height: 48px;
+      --input-height: 60px;
+      --typing-height: 20px;
+      --user-list-width: 200px;
     }
 
-    /* Reset y Base */
+    /* Estilos Generales */
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: var(--font-body); color: var(--text-primary);
+      margin: 0;
+      font-family: 'Inter', sans-serif;
       background-color: var(--bg-app);
-      background-image: radial-gradient(var(--dracula-selection) 1px, transparent 1px);
-      background-size: 20px 20px;
-      display: flex; justify-content: center; align-items: center; 
-      height: 100vh; /* Fijo a la altura de la ventana */
-      font-size: 15px;
-      overflow: hidden; /* Evita scroll en el body */
+      color: var(--text-primary);
+      /* Para la app de chat */
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    /* Scrollbar Global */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--dracula-comment); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-    
-    /* === CONTENEDOR PRINCIPAL (80% Ancho) === */
-    #main-app-container {
-      width: 80%; 
-      max-width: 1200px; 
-      height: 90vh; max-height: 900px;
+    /* Estilos del Contenedor de la Aplicación */
+    #app {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1; /* Ocupa el espacio restante */
+      overflow: hidden; /* Evita scroll doble en el cuerpo */
+    }
+
+    /* Header */
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15px;
+      height: var(--header-height);
       background-color: var(--bg-panel);
-      border-radius: var(--radius-panel);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    @media (max-width: 768px) { #main-app-container { width: 100%; height: 100%; border-radius: 0; } }
-
-    /* === PANTALLA DE LOGIN === */
-    #login-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: var(--bg-app); 
-      display: flex; justify-content: center; align-items: center; z-index: 100;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-    #login-overlay.hidden { opacity: 0; visibility: hidden; }
-
-    #login-box {
-      background-color: var(--bg-panel); padding: 3rem; text-align: center;
-      border-radius: var(--radius-panel);
-      box-shadow: 0 0 20px rgba(189, 147, 249, 0.2);
-      border: 1px solid var(--accent);
-      max-width: 90%;
-    }
-    #login-box h1 { margin: 0 0 0.5rem 0; color: var(--accent-hover); font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; }
-    #login-box p { color: var(--text-secondary); margin-bottom: 2rem; }
-    
-    #login-profiles { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
-    .profile-card { cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: transform 0.2s; }
-    .profile-card:hover { transform: translateY(-5px); }
-    .profile-card img {
-      width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--dracula-comment); 
-      object-fit: cover; margin-bottom: 0.8rem; transition: border-color 0.2s;
-    }
-    .profile-card:hover img { border-color: var(--green); box-shadow: 0 0 15px var(--green); }
-    .profile-name { font-weight: 600; color: var(--text-primary); }
-    .profile-card:hover .profile-name { color: var(--green); }
-    #login-error { color: var(--red); margin-top: 1rem; display: none; font-weight: bold; }
-
-    /* === CABECERA DEL CHAT === */
-    #chat-header { 
-      background: rgba(40, 42, 54, 0.95); padding: 1.2rem 2rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--dracula-selection);
+      font-weight: 600;
       z-index: 10;
-      flex-shrink: 0; 
     }
-    #chat-header-left { display: flex; align-items: center; gap: 1rem; }
-    #chat-header h2 { margin: 0; font-size: 1.1rem; font-weight: 500; color: var(--text-secondary); }
-    #chat-header h2 span { color: var(--accent-hover); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    #header span {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 1.5rem;
+    }
+    #toggle-users {
+        display: none; /* Ocultar por defecto, mostrar en móvil */
+    }
     
-    /* Botón Volver (oculto por defecto) */
-    #back-to-global {
-        display: none; background: var(--accent); color: var(--bg-app); border: none;
-        padding: 5px 12px; border-radius: 8px; font-weight: 700; cursor: pointer;
-        transition: 0.2s;
-    }
-    #back-to-global:hover { background: var(--accent-hover); }
-
-    #user-list-toggle {
-        background: transparent; border: 1px solid var(--accent); color: var(--accent);
-        padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600;
-        transition: all 0.2s;
-    }
-    #user-list-toggle:hover { background: var(--accent); color: var(--bg-app); }
-
-    /* === ÁREA DE MENSAJES === */
-    #messages-area {
-      flex: 1; display: flex; flex-direction: column; 
-      background-color: var(--bg-app);
-      position: relative;
-      min-height: 0; 
+    /* Contenedor principal de Mensajes y Usuarios */
+    #chat-main {
+        display: flex;
+        flex-grow: 1;
+        overflow: hidden;
     }
 
-    #messages { 
-      list-style-type: none; margin: 0; padding: 2rem; 
+    /* Contenedor de Mensajes (Chat Área) */
+    #messages-container {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Lista de Mensajes (donde se aplica el scroll) */
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 10px 10px var(--typing-height) 10px; /* Margen para el typing indicator */
+      flex-grow: 1; /* Ocupa todo el espacio disponible */
       overflow-y: auto; /* CRÍTICO: Permite el scroll */
-      display: flex; flex-direction: column; gap: 1.5rem;
-      height: 100%; /* CRÍTICO: Ocupa el espacio disponible */
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
     
-    #messages li { 
-      width: 100%; display: flex; position: relative; padding: 0; margin: 0;
-      animation: fadeIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); 
+    /* Estilos de Mensaje Individual */
+    #messages li {
+      padding: 5px 0;
+      word-wrap: break-word;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+    .msg-meta {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+    .msg-user {
+      font-weight: 700;
+      color: var(--cyan);
+      margin-right: 8px;
+    }
+    .msg-private-flag {
+      color: var(--yellow);
+      font-style: italic;
+      margin-left: 8px;
+    }
+    .msg-timestamp {
+      font-family: 'Fira Code', monospace;
+      margin-left: 8px;
+    }
+    .msg-reply {
+      padding-left: 10px;
+      border-left: 3px solid var(--green);
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    .msg-reply-user {
+      color: var(--green);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .msg-content {
+      white-space: pre-wrap;
+    }
+    .msg-image img {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 8px;
+    }
+    .msg-delete-btn {
+      position: absolute;
+      top: 5px;
+      right: 0px;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 0.7rem;
+      display: none;
+    }
+    #messages li:hover .msg-delete-btn {
+      display: block;
     }
 
-    .message-inner {
-        display: flex; max-width: 70%; align-items: flex-end; position: relative;
+    /* System Messages */
+    .msg-system {
+      text-align: center;
+      color: var(--orange);
+      font-style: italic;
+      padding: 10px 0;
     }
 
-    /* OTROS (Izquierda) */
-    #messages li.other { justify-content: flex-start; }
-    #messages li.other .message-inner { flex-direction: row; }
-    #messages li.other .avatar { margin-right: 12px; }
-    #messages li.other .message-bubble { 
-        background-color: var(--dracula-selection); color: var(--text-primary);
-        border-bottom-left-radius: 4px; 
+    /* Typing Indicator */
+    #typing-indicator {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--typing-height);
+      padding: 0 10px;
+      font-size: 0.8rem;
+      color: var(--green);
+      background-color: var(--bg-app);
+      z-index: 5;
     }
-    #messages li.other .username-label {
-        color: var(--accent-hover); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;
+
+    /* Formulario de Entrada */
+    #form {
+      background: var(--dracula-bg);
+      padding: 5px 10px;
+      height: var(--input-height);
+      display: flex;
+      border-top: 1px solid var(--dracula-selection);
+      align-items: center;
+    }
+    #form input {
+      border: 0;
+      padding: 10px;
+      background: var(--bg-panel);
+      color: var(--text-primary);
+      flex-grow: 1;
+      margin-right: 5px;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    #form button, #form label {
+      background: var(--accent);
+      border: none;
+      padding: 10px 15px;
+      margin-left: 5px;
+      color: var(--dracula-fg);
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    #form button:hover, #form label:hover {
+        background: var(--accent-hover);
+    }
+    #form button:disabled {
+        background: var(--dracula-comment);
+        cursor: not-allowed;
+    }
+    #file-input {
+      display: none;
+    }
+    .reply-context {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(80, 250, 123, 0.1);
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      color: var(--green);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--green);
+    }
+    .reply-context span {
+      max-width: 90%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .reply-context button {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    /* MIOS (Derecha) */
-    #messages li.me { justify-content: flex-end; }
-    #messages li.me .message-inner { flex-direction: row-reverse; }
-    #messages li.me .avatar { margin-left: 12px; }
-    #messages li.me .message-bubble {
-        background: linear-gradient(135deg, var(--purple), #9665d6); color: #fff;
-        border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(189, 147, 249, 0.2);
+    /* --- LOGIN OVERLAY --- */
+    #login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(40, 42, 54, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
     }
-    #messages li.me .username-label { display: none; }
-    #messages li.me .timestamp { color: rgba(255,255,255,0.7); }
+    #login-overlay h1 { color: var(--accent); }
+    #login-overlay input {
+      padding: 10px;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      border: 2px solid var(--bg-panel);
+      border-radius: 5px;
+      background: var(--dracula-bg);
+      color: var(--text-primary);
+      text-align: center;
+    }
+    #login-overlay button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      background: var(--accent);
+      color: var(--dracula-fg);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #login-error {
+      color: var(--red);
+      margin-top: 10px;
+    }
 
-    /* Componentes Mensaje */
-    .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
-    .message-bubble { padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; position: relative; }
-    .message-bubble img { display: block; max-width: 100%; height: auto; border-radius: 12px; margin-top: 8px; cursor: pointer; }
-    .timestamp { display: block; text-align: right; font-size: 0.7rem; margin-top: 4px; opacity: 0.7; }
+    /* --- SIDEBAR DE USUARIOS --- */
+    #user-list-sidebar {
+      width: var(--user-list-width);
+      min-width: var(--user-list-width);
+      background-color: var(--bg-panel);
+      border-left: 1px solid var(--dracula-selection);
+      overflow-y: auto;
+      padding: 10px;
+      /* Solo visible en escritorio */
+      display: none; 
+    }
+    #user-list-sidebar h3 {
+        color: var(--accent);
+        margin-top: 0;
+        border-bottom: 1px solid var(--dracula-comment);
+        padding-bottom: 5px;
+    }
+    #user-list-sidebar ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    #user-list-sidebar li {
+      padding: 8px 5px;
+      cursor: pointer;
+      transition: background 0.1s;
+      border-radius: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #user-list-sidebar li:hover {
+      background-color: var(--dracula-selection);
+    }
+    #user-list-sidebar li[data-context="active"] {
+      background-color: var(--accent);
+    }
 
-    /* Acciones */
-    .message-actions { position: absolute; top: -10px; background: var(--bg-app); border: 1px solid var(--dracula-comment); border-radius: 20px; padding: 2px 6px; display: none; gap: 5px; z-index: 10; }
-    #messages li.me .message-inner:hover .message-actions { display: flex; right: 50px; }
-    #messages li.other .message-inner:hover .message-actions { display: flex; left: 50px; }
-    .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 2px 5px; opacity: 0.7; transition: 0.2s; }
-    .action-btn:hover { opacity: 1; transform: scale(1.1); }
+    /* Overlay para Móviles (se muestra cuando es necesario) */
+    #user-list-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(40, 42, 54, 0.95);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+    }
+    #user-list-overlay.visible {
+        display: flex;
+    }
+    #user-list-overlay .overlay-header {
+        height: var(--header-height);
+        background-color: var(--bg-panel);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
+        font-weight: 600;
+    }
+    #user-list-overlay .overlay-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: var(--dracula-bg);
+    }
+    #user-list-overlay .overlay-content ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    #user-list-overlay .overlay-content li {
+        padding: 12px 10px;
+        cursor: pointer;
+        border-bottom: 1px solid var(--dracula-selection);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #user-list-overlay .overlay-content li[data-context="active"] {
+        background-color: var(--dracula-selection);
+    }
 
-    /* Respuesta */
-    .reply-quote { font-size: 0.8rem; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid var(--accent-hover); opacity: 0.8; cursor: pointer; }
-    .reply-quote strong { display: block; color: var(--accent-hover); }
 
-    /* === BARRA DE ESCRITURA === */
-    #form-container { flex-shrink: 0; background: var(--bg-panel); border-top: 1px solid rgba(255,255,255,0.05); }
-    
-    #reply-context { background: var(--dracula-selection); padding: 0.5rem 2rem; display: none; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent-hover); font-size: 0.9rem; color: var(--text-secondary); }
-    #close-reply { cursor: pointer; color: var(--red); font-weight: bold; }
-    #typing-indicator { padding: 5px 2rem; height: 25px; font-size: 0.75rem; color: var(--yellow); font-style: italic; background: var(--bg-app); display: flex; align-items: center; }
-
-    #form { padding: 1.2rem 2rem; display: flex; align-items: flex-end; gap: 1rem; }
-    #attach-btn { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0.5rem; font-size: 1.2rem; transition: 0.2s; }
-    #attach-btn:hover { color: var(--accent-hover); transform: scale(1.1); }
-    
-    #input { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--dracula-selection); border-radius: 20px; padding: 0.8rem 1.2rem; color: white; font-family: var(--font-body); font-size: 1rem; resize: none; max-height: 150px; transition: 0.2s; outline: none; }
-    #input:focus { border-color: var(--accent-hover); background: rgba(0,0,0,0.1); }
-    
-    #form button[type="submit"] { background: var(--accent); border: none; width: 45px; height: 45px; border-radius: 50%; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; box-shadow: 0 4px 10px rgba(189, 147, 249, 0.3); }
-    #form button[type="submit"]:hover { background: var(--accent-hover); transform: scale(1.05); }
-
-    /* Sistema / Utilidades */
-    #messages li.system { justify-content: center; }
-    #messages li.system .message-inner { max-width: 100%; flex-direction: row; }
-    #messages li.system .message-bubble { background: transparent; color: var(--yellow); font-style: italic; text-align: center; box-shadow: none; padding: 0; }
-    code { background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; color: var(--orange); font-family: var(--font-code); }
-    .spoiler { background: var(--dracula-comment); color: transparent; cursor: pointer; border-radius: 4px; }
-    .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
-
-    /* Lista Usuarios (Overlay - La "Sidebar" flotante) */
-    #user-list-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(5px); }
-    #user-list-overlay.visible { display: flex; }
-    #user-list-box { background: var(--bg-panel); padding: 2rem; border-radius: 24px; width: 350px; border: 1px solid var(--accent); position: relative; max-height: 80%; overflow-y: auto; }
-    #user-list-box h2 { color: var(--accent-hover); text-align: center; margin-top: 0; }
-    #user-list-box .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--red); cursor: pointer; font-size: 1.2rem; }
-    #user-list-ul { list-style: none; padding: 0; }
-    #user-list-ul li { padding: 0.8rem; margin-bottom: 0.5rem; background: var(--bg-app); border-radius: 12px; text-align: center; color: var(--text-primary); font-weight: 500; border-left: 4px solid transparent; cursor: pointer; transition: 0.2s; }
-    #user-list-ul li:hover { border-color: var(--accent-hover); background: rgba(139, 233, 253, 0.1); transform: translateX(5px); }
-    #user-list-ul li[data-user="Hugo" i] { border-color: var(--green); }
-    #user-list-ul li[data-user="Rafa" i] { border-color: var(--pink); }
-    #user-list-ul li[data-user="Alvaro" i] { border-color: var(--orange); }
-    #user-list-ul li[data-user="Sergio" i] { border-color: var(--cyan); }
-
+    /* --- Media Queries (Adaptación para Escritorio) --- */
+    @media (min-width: 768px) {
+        #toggle-users {
+            display: none !important; /* Ocultar el botón de menú en escritorio */
+        }
+        #user-list-sidebar {
+            display: block; /* Mostrar la sidebar permanente en escritorio */
+        }
+        #user-list-overlay {
+            display: none !important; /* Ocultar el overlay en escritorio */
+        }
+    }
   </style>
 </head>
 <body>
-
-  <div id="main-app-container">
     
     <div id="login-overlay">
-      <div id="login-box">
         <h1>DRACULA CHAT</h1>
-        <p>Identifícate:</p>
-        <div id="login-profiles">
-          <div class="profile-card" data-username="Rafa"><img src="/images/Rafa.jpg"><div class="profile-name">Rafa</div></div>
-          <div class="profile-card" data-username="Hugo"><img src="/images/Hugo.jpg"><div class="profile-name">Hugo</div></div>
-          <div class="profile-card" data-username="Sergio"><img src="/images/Sergio.jpg"><div class="profile-name">Sergio</div></div>
-          <div class="profile-card" data-username="Alvaro"><img src="/images/Alvaro.png"><div class="profile-name">Alvaro</div></div>
-        </div>
-        <p id="login-error">Error de acceso.</p>
-      </div>
+        <input type="text" id="username-input" placeholder="Introduce tu nombre (Rafa, Hugo, etc.)">
+        <button id="login-button">Entrar</button>
+        <div id="login-error"></div>
     </div>
-
-    <div id="user-list-overlay">
-      <div id="user-list-box">
-        <button class="close-btn" id="close-user-list">✖</button>
-        <h2>Usuarios Online</h2>
-        <p style="text-align: center; font-size: 0.8rem; color: var(--text-secondary);">Haz clic en un usuario para enviar DM</p>
-        <ul id="user-list-ul"></ul>
-      </div>
-    </div>
-
-    <div id="chat-main-content">
-      <div id="chat-header">
-        <div id="chat-header-left">
-            <button id="back-to-global">← Global</button>
-            <h2 id="channel-name"># GLOBAL</h2>
-        </div>
-        <button id="user-list-toggle">👥 Online</button>
-      </div>
-      
-      <div id="messages-area">
-        <ul id="messages"></ul>
-      </div>
-
-      <div id="form-container">
-        <div id="typing-indicator"></div>
-        <div id="reply-context">
-          <span>Respondiendo a <strong id="reply-context-user"></strong>: <span id="reply-context-text"></span></span>
-          <span id="close-reply">✖</span>
-        </div>
-        
-        <form id="form" action="">
-          <button type="button" id="attach-btn" title="Enviar imagen">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          </button>
-          <textarea id="input" autocomplete="off" placeholder="Mensaje..." rows="1"></textarea>
-          <input type="file" id="file-input" accept="image/*" style="display:none;">
-          <button type="submit">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io({ transports: ['websocket'], upgrade: false });
-
-    // Elementos DOM
-    const els = {
-        loginOverlay: document.getElementById('login-overlay'),
-        loginError: document.getElementById('login-error'),
-        messages: document.getElementById('messages'),
-        form: document.getElementById('form'),
-        input: document.getElementById('input'),
-        userListOverlay: document.getElementById('user-list-overlay'),
-        userListUl: document.getElementById('user-list-ul'),
-        typing: document.getElementById('typing-indicator'),
-        replyCtx: document.getElementById('reply-context'),
-        replyUser: document.getElementById('reply-context-user'),
-        replyText: document.getElementById('reply-context-text'),
-        closeReply: document.getElementById('close-reply'),
-        fileInput: document.getElementById('file-input'),
-        attachBtn: document.getElementById('attach-btn'),
-        chanName: document.getElementById('channel-name'),
-        backBtn: document.getElementById('back-to-global'),
-        toggleUsers: document.getElementById('user-list-toggle'),
-        closeUsers: document.getElementById('close-user-list')
-    };
-
-    let myUsername = '';
-    let currentReplyToId = null;
-    let isTyping = false;
-    let typingTimer;
-    let chatContext = { type: 'global', target: null }; // 'global' | 'private'
-
-    // --- UTILS ---
-    // CRÍTICO: Usa 'Alvaro' y asume el path '/images/'
-    const getAvatar = u => `/images/${u}.${u === 'Alvaro' ? 'png' : 'jpg'}`; 
-    const fmtTime = ts => new Date(ts * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    const escapeHTML = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
-    function parseMD(t) {
-        let s = escapeHTML(t);
-        s = s.replace(/\|\|(.*?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-        s = s.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/`(.*?)`/g, '<code>$1</code>');
-        return s.replace(/\n/g, '<br>');
-    }
+    <div id="app" style="display: none;">
+        
+        <header id="header">
+            <span id="chat-title">Chat Global</span>
+            <div>
+                <span id="toggle-users" role="button">☰</span> <span id="go-global" style="margin-left: 10px; color: var(--green); cursor: pointer;" title="Volver al chat global">🌍</span>
+            </div>
+        </header>
 
-    // --- CONTEXT SWITCHING ---
-    function switchContext(type, target) {
-        chatContext = { type, target };
-        currentReplyToId = null;
-        els.replyCtx.style.display = 'none';
-        els.messages.innerHTML = ''; 
-        els.userListOverlay.classList.remove('visible');
+        <div id="chat-main">
 
-        if (type === 'global') {
-            els.chanName.innerText = '# GLOBAL';
-            els.chanName.style.color = 'var(--text-secondary)';
-            els.backBtn.style.display = 'none';
-            // Volver a pedir el historial global
-            socket.emit('get global history'); 
-        } else {
-            els.chanName.innerText = `@ ${target}`;
-            els.chanName.style.color = 'var(--green)';
-            els.backBtn.style.display = 'inline-block';
-            socket.emit('get private history', target);
-        }
-        els.input.focus();
-    }
-    els.backBtn.onclick = () => switchContext('global');
+            <div id="messages-container">
+                <ul id="messages">
+                    </ul>
+                <div id="typing-indicator"></div>
+            </div>
 
-    // --- IMÁGENES ---
-    const MAX_IMG = 25 * 1024 * 1024; 
-    async function sendImage(file) {
-        if (file.size > MAX_IMG) return alert("Imagen muy grande (>25MB)");
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (chatContext.type === 'global') {
-                socket.emit('chat image', reader.result, currentReplyToId);
-            } else {
-                socket.emit('private message', chatContext.target, reader.result, currentReplyToId, 'image');
-            }
-            cancelReply();
-            socket.emit('stop typing', chatContext.type === 'global' ? 'global' : chatContext.target);
+            <aside id="user-list-sidebar">
+                <h3>👥 Usuarios Online</h3>
+                <ul id="user-list-ul">
+                    </ul>
+            </aside>
+
+            <div id="user-list-overlay">
+                <div class="overlay-header">
+                    <h3>👥 Usuarios Online</h3>
+                    <span id="close-users" role="button">✕</span>
+                </div>
+                <div class="overlay-content">
+                    <ul id="user-list-ul-overlay">
+                        </ul>
+                </div>
+            </div>
+        </div>
+
+        <form id="form">
+            <div id="reply-context" class="reply-context" style="display:none;">
+                <span id="reply-text"></span>
+                <button type="button" id="cancel-reply">✕</button>
+            </div>
+
+            <label for="file-input" title="Enviar Imagen" style="margin-right: 5px;">🖼️</label>
+            <input id="file-input" type="file" accept="image/*">
+
+            <input id="input" autocomplete="off" placeholder="Escribe un mensaje...">
+            <button id="send-button" type="submit">Enviar</button>
+        </form>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // --- 1. SETUP DE VARIABLES Y ELEMENTOS DEL DOM ---
+        const socket = io();
+        let myUsername = null;
+        let replyToMessage = null;
+        let typingTimeout = null;
+        const TYPING_TIMER_LENGTH = 1000;
+
+        // Mapeo de elementos del DOM (más fácil de acceder)
+        const els = {
+            app: document.getElementById('app'),
+            loginOverlay: document.getElementById('login-overlay'),
+            loginInput: document.getElementById('username-input'),
+            loginButton: document.getElementById('login-button'),
+            loginError: document.getElementById('login-error'),
+            
+            chatTitle: document.getElementById('chat-title'),
+            messages: document.getElementById('messages'),
+            form: document.getElementById('form'),
+            input: document.getElementById('input'),
+            typing: document.getElementById('typing-indicator'),
+            goGlobal: document.getElementById('go-global'),
+            
+            replyContext: document.getElementById('reply-context'),
+            replyText: document.getElementById('reply-text'),
+            cancelReply: document.getElementById('cancel-reply'),
+
+            userListSidebar: document.getElementById('user-list-sidebar'),
+            userListUl: document.getElementById('user-list-ul'),
+            userListOverlay: document.getElementById('user-list-overlay'),
+            userListUlOverlay: document.getElementById('user-list-ul-overlay'),
+            toggleUsers: document.getElementById('toggle-users'),
+            closeUsers: document.getElementById('close-users'),
+            fileInput: document.getElementById('file-input'),
+            sendButton: document.getElementById('send-button')
         };
-        reader.readAsDataURL(file);
-    }
 
-    // --- LOGIN ---
-    document.querySelectorAll('.profile-card').forEach(c => {
-        c.addEventListener('click', () => {
-            const name = c.dataset.username;
-            socket.emit('login', name, success => {
-                if (success) {
-                    myUsername = name;
-                    els.loginOverlay.classList.add('hidden');
-                    els.input.focus();
-                } else {
-                    els.loginError.style.display = 'block';
+        // Estado del chat
+        let chatContext = {
+            type: 'global', // 'global' o 'private'
+            target: null // Nombre del usuario si es 'private'
+        };
+        
+        // --- 2. FUNCIONES DE UI ---
+
+        /** Mueve el scroll al final del chat. CRÍTICO para el scroll. */
+        function scrollToBottom() {
+            // Se usa requestAnimationFrame para asegurar que el DOM se haya renderizado antes del scroll
+            requestAnimationFrame(() => {
+                els.messages.scrollTop = els.messages.scrollHeight;
+            });
+        }
+        
+        /** Maneja el cambio entre chat global y chat privado. */
+        function switchContext(type, target = null) {
+            // Evitar cambiar si ya estamos en el contexto
+            if (chatContext.type === type && chatContext.target === target) return;
+
+            // 1. Limpiar el chat actual
+            els.messages.innerHTML = '';
+            
+            // 2. Actualizar contexto
+            chatContext.type = type;
+            chatContext.target = target;
+
+            // 3. Actualizar UI
+            if (type === 'global') {
+                els.chatTitle.textContent = 'Chat Global 🌍';
+                els.goGlobal.style.display = 'none';
+                els.input.placeholder = 'Escribe un mensaje global...';
+                
+                // Volver a pedir el historial global
+                socket.emit('get global history'); 
+                
+            } else {
+                els.chatTitle.textContent = `DM: ${target} 💬`;
+                els.goGlobal.style.display = 'inline';
+                els.input.placeholder = `Escribe un mensaje privado a ${target}...`;
+                
+                // Pedir historial privado
+                socket.emit('get private history', target); 
+            }
+            
+            // 4. Limpiar contexto de respuesta
+            cancelReply();
+            
+            // 5. Ocultar overlay en móvil después de la selección
+            els.userListOverlay.classList.remove('visible');
+            
+            // 6. Resaltar elemento activo en la lista de usuarios
+            updateUserListHighlight();
+        }
+        
+        /** Resalta el usuario activo en la lista de usuarios. */
+        function updateUserListHighlight() {
+            // Resaltar en Sidebar (Escritorio)
+            Array.from(els.userListUl.children).forEach(li => {
+                li.removeAttribute('data-context');
+                if (chatContext.type === 'private' && li.dataset.user === chatContext.target) {
+                    li.setAttribute('data-context', 'active');
                 }
             });
-        });
-    });
-
-    // --- CHAT LOGIC ---
-    els.form.addEventListener('submit', e => {
-        e.preventDefault();
-        const txt = els.input.value.trim();
-        if (!txt) return;
-        
-        if (chatContext.type === 'global') {
-            if (txt === '/clear_chat') socket.emit('clear chat request');
-            else socket.emit('chat message', txt, currentReplyToId);
-        } else {
-            socket.emit('private message', chatContext.target, txt, currentReplyToId, 'text');
+             // Resaltar en Overlay (Móvil)
+            Array.from(els.userListUlOverlay.children).forEach(li => {
+                li.removeAttribute('data-context');
+                if (chatContext.type === 'private' && li.dataset.user === chatContext.target) {
+                    li.setAttribute('data-context', 'active');
+                }
+            });
         }
 
-        els.input.value = '';
-        els.input.style.height = 'auto';
-        socket.emit('stop typing', chatContext.type === 'global' ? 'global' : chatContext.target);
-        cancelReply();
-    });
-
-    els.input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); els.form.dispatchEvent(new Event('submit')); }
-        if (e.key === 'Escape') { 
-            if(currentReplyToId) cancelReply(); 
-            else if(els.userListOverlay.classList.contains('visible')) els.userListOverlay.classList.remove('visible'); 
-        }
-    });
-
-    els.input.addEventListener('input', () => {
-        // Auto-ajustar altura
-        els.input.style.height = 'auto';
-        els.input.style.height = els.input.scrollHeight + 'px';
-        
-        // Indicador de escritura
-        if (!isTyping) { 
-            isTyping = true; 
-            socket.emit('typing', chatContext.type === 'global' ? 'global' : chatContext.target);
-        }
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => { 
-            isTyping = false; 
-            socket.emit('stop typing', chatContext.type === 'global' ? 'global' : chatContext.target);
-        }, 2000);
-    });
-
-    els.attachBtn.addEventListener('click', () => els.fileInput.click());
-    els.fileInput.addEventListener('change', e => { if(e.target.files[0]) sendImage(e.target.files[0]); els.fileInput.value=null; });
-    els.input.addEventListener('paste', e => {
-        const item = (e.clipboardData.items[0]);
-        if (item && item.type.indexOf('image') !== -1) {
-            e.preventDefault(); sendImage(item.getAsFile());
-        }
-    });
-
-    // --- RENDER ---
-    function addMessage(data) {
-        // FILTROS DE CONTEXTO
-        if (chatContext.type === 'private' && !data.isPrivate && data.type !== 'system') return;
-        if (chatContext.type === 'global' && data.isPrivate) return;
-        
-        if (chatContext.type === 'private' && data.type !== 'system') {
-            const isRelevant = (data.user === myUsername && data.recipient === chatContext.target) ||
-                               (data.user === chatContext.target && data.recipient === myUsername);
-            if (!isRelevant) return;
+        /** Formatea la hora UNIX a HH:MM:SS */
+        function formatTimestamp(ts) {
+            if (!ts) return '';
+            const date = new Date(ts * 1000);
+            return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
-        const li = document.createElement('li');
-        li.id = `msg-${data.id}`;
-        
-        if (data.type === 'system') {
-            li.className = 'system';
-            li.innerHTML = `<div class="message-inner" style="justify-content:center;width:100%"><div class="message-bubble" style="background:transparent;color:var(--yellow);text-align:center">✨ ${data.text || data}</div></div>`;
-        } else {
-            const isMe = data.user === myUsername;
-            li.className = isMe ? 'me' : 'other';
-            li.dataset.user = data.user;
+        /** Maneja la acción de responder a un mensaje. */
+        function setReply(messageId, userName, messageText) {
+            replyToMessage = { id: messageId, user: userName, text: messageText };
+            els.replyText.textContent = `Respondiendo a ${userName}: "${messageText.substring(0, 30)}${messageText.length > 30 ? '...' : ''}"`;
+            els.replyContext.style.display = 'flex';
+        }
 
-            // Construcción de la burbuja
-            let contentHtml = '';
-            if (data.reply_to_id) {
-                // Obtenemos info del mensaje respondido para mostrar en el quote
-                const repliedMsgEl = document.getElementById(`msg-${data.reply_to_id}`);
-                let replyUser = 'Mensaje borrado';
-                let replyText = '...';
+        /** Cancela el modo responder. */
+        function cancelReply() {
+            replyToMessage = null;
+            els.replyContext.style.display = 'none';
+            els.input.focus();
+        }
 
-                if (repliedMsgEl) {
-                    replyUser = repliedMsgEl.dataset.user;
-                    const bubble = repliedMsgEl.querySelector('.message-bubble');
-                    if (bubble) {
-                         // Evita mostrar username y timestamp en el quote
-                         let innerText = bubble.textContent.trim();
-                         // Filtra el texto del username-label (si existe) y el timestamp
-                         const usernameLabel = repliedMsgEl.querySelector('.username-label');
-                         if(usernameLabel) innerText = innerText.replace(usernameLabel.textContent, '').trim();
-                         const timestamp = repliedMsgEl.querySelector('.timestamp');
-                         if(timestamp) innerText = innerText.replace(timestamp.textContent, '').trim();
+        /** Crea y añade un elemento de mensaje a la lista. */
+        function addMessage(msg) {
+            const li = document.createElement('li');
+            li.id = `msg-${msg.id}`;
+            li.dataset.id = msg.id;
 
-                         replyText = repliedMsgEl.querySelector('img:not(.avatar)') ? 'Imagen' : innerText.substring(0, 30) + (innerText.length > 30 ? '...' : '');
+            // Manejar mensajes de sistema
+            if (msg.type === 'system') {
+                li.classList.add('msg-system');
+                li.textContent = msg.text;
+                els.messages.appendChild(li);
+                scrollToBottom();
+                return;
+            }
+
+            // 1. Meta (Usuario, Privado, Timestamp)
+            const meta = document.createElement('div');
+            meta.classList.add('msg-meta');
+            
+            // Icono de perfil
+            const profileIcon = document.createElement('img');
+            profileIcon.src = `./images/${msg.user}.png`; // Asumiendo .png o .jpg
+            // Intentar cargar .png. Si falla, intentar .jpg
+            profileIcon.onerror = function() {
+                this.src = `./images/${msg.user}.jpg`;
+            };
+            profileIcon.style.width = '20px';
+            profileIcon.style.height = '20px';
+            profileIcon.style.borderRadius = '50%';
+            profileIcon.style.marginRight = '5px';
+            profileIcon.style.verticalAlign = 'middle';
+            meta.appendChild(profileIcon);
+            
+            // Nombre de Usuario
+            const userSpan = document.createElement('span');
+            userSpan.classList.add('msg-user');
+            userSpan.textContent = msg.user;
+            meta.appendChild(userSpan);
+            
+            // Flag Privado
+            if (msg.isPrivate) {
+                const privateFlag = document.createElement('span');
+                privateFlag.classList.add('msg-private-flag');
+                privateFlag.textContent = '(DM)';
+                meta.appendChild(privateFlag);
+            }
+            
+            // Timestamp
+            const timestampSpan = document.createElement('span');
+            timestampSpan.classList.add('msg-timestamp');
+            timestampSpan.textContent = formatTimestamp(msg.timestamp);
+            meta.appendChild(timestampSpan);
+            
+            li.appendChild(meta);
+
+            // 2. Reply Context (Si existe)
+            if (msg.reply_to_id) {
+                const replyDiv = document.createElement('div');
+                replyDiv.classList.add('msg-reply');
+                replyDiv.title = 'Haga click para ir al mensaje original';
+                
+                // Enlace al mensaje original (si está en la pantalla)
+                replyDiv.onclick = () => {
+                    const originalMsg = document.getElementById(`msg-${msg.reply_to_id}`);
+                    if (originalMsg) {
+                        originalMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // Opcional: Resaltar temporalmente el mensaje original
+                        originalMsg.style.backgroundColor = 'rgba(80, 250, 123, 0.2)';
+                        setTimeout(() => originalMsg.style.backgroundColor = '', 1000);
+                    } else {
+                        console.log(`Mensaje original #${msg.reply_to_id} no encontrado.`);
                     }
+                };
+
+                // Recuperar info del reply para mostrar (requiere buscar en el DOM/historial)
+                // Por simplicidad, aquí solo mostramos el ID, pero lo ideal sería mostrar el contenido.
+                // En este ejemplo, usaremos un texto genérico si el original no está visible:
+                const originalMsg = document.getElementById(`msg-${msg.reply_to_id}`);
+                const originalUser = originalMsg ? originalMsg.querySelector('.msg-user').textContent : 'Usuario Desconocido';
+                
+                const replyUserSpan = document.createElement('span');
+                replyUserSpan.classList.add('msg-reply-user');
+                replyUserSpan.textContent = `↪️ ${originalUser}`;
+                replyDiv.appendChild(replyUserSpan);
+
+                li.appendChild(replyDiv);
+            }
+
+            // 3. Contenido del Mensaje
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('msg-content');
+            
+            if (msg.type === 'image') {
+                const img = document.createElement('img');
+                img.src = msg.text; // La URL o base64
+                img.classList.add('msg-image');
+                contentDiv.appendChild(img);
+            } else {
+                contentDiv.textContent = msg.text;
+            }
+            li.appendChild(contentDiv);
+
+            // 4. Botón Responder (Reply)
+            const replyBtn = document.createElement('span');
+            replyBtn.textContent = '↩️ Responder';
+            replyBtn.style.color = 'var(--purple)';
+            replyBtn.style.fontSize = '0.7rem';
+            replyBtn.style.cursor = 'pointer';
+            replyBtn.style.marginLeft = '10px';
+            replyBtn.onclick = () => setReply(msg.id, msg.user, msg.text);
+            meta.appendChild(replyBtn);
+
+            // 5. Botón Eliminar
+            if (msg.user === myUsername) {
+                const deleteBtn = document.createElement('span');
+                deleteBtn.textContent = '✕';
+                deleteBtn.classList.add('msg-delete-btn');
+                deleteBtn.onclick = () => {
+                    if (confirm(`¿Seguro que quieres eliminar este mensaje (ID: ${msg.id})?`)) {
+                        socket.emit('delete message', msg.id, msg.isPrivate);
+                    }
+                };
+                li.appendChild(deleteBtn);
+            }
+
+            els.messages.appendChild(li);
+            scrollToBottom();
+        }
+
+        // --- 3. MANEJO DE EVENTOS (LISTENERS) ---
+
+        // A. LOGIN
+        els.loginButton.onclick = () => {
+            const username = els.loginInput.value.trim();
+            if (username) {
+                socket.emit('login', username, (success) => {
+                    if (success) {
+                        myUsername = username;
+                        els.loginOverlay.style.display = 'none';
+                        els.app.style.display = 'flex';
+                        switchContext('global'); // Iniciar en el chat global
+                        els.input.focus();
+                    } else {
+                        els.loginError.textContent = 'Nombre de usuario no permitido. Intenta con Rafa, Hugo, Sergio o Alvaro.';
+                    }
+                });
+            }
+        };
+        els.loginInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') els.loginButton.click();
+        });
+
+        // B. ENVÍO DE MENSAJES
+        els.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = els.input.value.trim();
+            const replyId = replyToMessage ? replyToMessage.id : null;
+            
+            if (text) {
+                // 1. Enviar mensaje de texto
+                if (chatContext.type === 'global') {
+                    socket.emit('chat message', text, replyId);
+                } else {
+                    socket.emit('private message', chatContext.target, text, replyId, 'text');
+                }
+                els.input.value = '';
+                cancelReply();
+            }
+        });
+        
+        // C. ENVÍO DE IMÁGENES
+        els.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64Data = reader.result;
+                const replyId = replyToMessage ? replyToMessage.id : null;
+
+                // 2. Enviar imagen (Data URI)
+                if (chatContext.type === 'global') {
+                    socket.emit('chat image', base64Data, replyId);
+                } else {
+                    socket.emit('private message', chatContext.target, base64Data, replyId, 'image');
                 }
                 
-                contentHtml += `<div class="reply-quote" onclick="scrollToMsg(${data.reply_to_id})">↩ Respondiendo a <strong>${replyUser}</strong>: ${replyText}</div>`;
-            }
+                // Limpiar input y contexto
+                els.fileInput.value = null; 
+                cancelReply();
+            };
+            reader.readAsDataURL(file);
+        });
 
-            if (!isMe) contentHtml += `<span class="username-label">${data.user}</span>`;
-
-            if (data.type === 'image') {
-                contentHtml += `<img src="${data.text}" onclick="window.open(this.src)">`;
-            } else {
-                contentHtml += parseMD(data.text);
-            }
-
-            contentHtml += `<span class="timestamp">${fmtTime(data.timestamp)}</span>`;
+        // D. INDICADOR DE ESCRITURA
+        els.input.addEventListener('input', () => {
+            if (!myUsername) return;
             
-            // Acciones
-            const actions = `
-                <div class="message-actions">
-                    <button class="action-btn reply-btn" data-id="${data.id}" data-user="${data.user}">↩</button>
-                    ${isMe ? `<button class="action-btn delete-btn" style="color:var(--red)" data-id="${data.id}">🗑</button>` : ''}
-                </div>
-            `;
+            // 1. Enviar 'typing'
+            if (!typingTimeout) {
+                socket.emit('typing', chatContext.type === 'global' ? 'global' : chatContext.target);
+            }
 
-            li.innerHTML = `
-                <div class="message-inner">
-                    <div class="avatar-wrapper">
-                        <img class="avatar" src="${getAvatar(data.user)}">
-                    </div>
-                    <div class="message-bubble">
-                        ${contentHtml}
-                    </div>
-                    ${actions}
-                </div>
-            `;
-        }
-        els.messages.appendChild(li);
-        // CRÍTICO: Asegura el scroll al final
-        els.messages.scrollTop = els.messages.scrollHeight;
-    }
+            // 2. Reiniciar timer de 'stop typing'
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                socket.emit('stop typing', chatContext.type === 'global' ? 'global' : chatContext.target);
+                typingTimeout = null;
+            }, TYPING_TIMER_LENGTH);
+        });
 
-    // --- EVENTOS UI ---
-    els.messages.addEventListener('click', (e) => {
-        const replyBtn = e.target.closest('.reply-btn');
-        if (replyBtn) {
-            const id = replyBtn.dataset.id;
-            const user = replyBtn.dataset.user;
-            initReply(id, user);
-            return;
-        }
+        // E. NAVEGACIÓN
+        els.goGlobal.onclick = () => switchContext('global');
+        els.cancelReply.onclick = cancelReply;
+
+        // F. MOBILE OVERLAY
+        els.toggleUsers.onclick = () => els.userListOverlay.classList.add('visible');
+        els.closeUsers.onclick = () => els.userListOverlay.classList.remove('visible');
+
+        // --- 4. SOCKET LISTENERS (SERVER) ---
+
+        // Recibir mensaje global o privado. Los DMs siempre pasan por aquí.
+        socket.on('chat message', (msg) => {
+            if (chatContext.type === 'global') {
+                addMessage(msg);
+            }
+        });
         
-        const deleteBtn = e.target.closest('.delete-btn');
-        if (deleteBtn) {
-            const id = deleteBtn.dataset.id;
-            if(confirm("¿Borrar mensaje?")) socket.emit('delete message', id, chatContext.type === 'private');
-            return;
-        }
-    });
+        socket.on('private message', (msg) => {
+            // Mostrar solo si estoy en el DM con el remitente o el destinatario
+            const isTarget = (msg.user === myUsername && msg.recipient === chatContext.target) || 
+                             (msg.user === chatContext.target && msg.recipient === myUsername);
+                             
+            if (isTarget) {
+                addMessage(msg);
+            }
+        });
+        
+        socket.on('system message', (msg) => {
+            addMessage({ type: 'system', text: msg });
+        });
 
-    window.initReply = (id, user) => {
-        currentReplyToId = id;
-        els.replyUser.textContent = user;
-        const el = document.getElementById(`msg-${id}`);
-        let text = "Mensaje";
-        if (el) {
-             const bubble = el.querySelector('.message-bubble');
-             if (bubble) {
-                const img = bubble.querySelector('img:not(.avatar)');
-                if (img) {
-                    text = "Imagen";
-                } else {
-                    let innerText = bubble.textContent.trim();
-                    const usernameLabel = el.querySelector('.username-label');
-                    if(usernameLabel) innerText = innerText.replace(usernameLabel.textContent, '').trim();
-                    const timestamp = el.querySelector('.timestamp');
-                    if(timestamp) innerText = innerText.replace(timestamp.textContent, '').trim();
-                    
-                    text = innerText.substring(0, 30) + (innerText.length > 30 ? '...' : '');
-                }
-             }
-        }
-        els.replyText.textContent = text;
-        els.replyCtx.style.display = 'flex';
-        els.input.focus();
-    };
+        // Historial (Global o Privado)
+        socket.on('chat history', d => {
+            // Asegurarse de que el historial corresponde al contexto actual
+            if (d.type === 'global' && chatContext.type === 'global' || 
+                d.type === 'private' && chatContext.type === 'private' && d.target === chatContext.target) {
+                
+                els.messages.innerHTML = '';
+                d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user || m.sender }));
+            }
+        });
+        
+        // Manejo de acciones en mensajes
+        socket.on('message deleted', id => { 
+            const e = document.getElementById(`msg-${id}`); 
+            if(e) e.remove(); 
+            // Si se elimina el mensaje al que respondíamos, cancelar el reply
+            if (replyToMessage && replyToMessage.id === id) cancelReply();
+        });
+        socket.on('chat cleared', () => els.messages.innerHTML = '');
 
-    window.scrollToMsg = (id) => {
-        const el = document.getElementById(`msg-${id}`);
-        if(el) {
-            el.scrollIntoView({behavior: "smooth", block: "center"});
-            el.style.backgroundColor = 'rgba(189, 147, 249, 0.2)'; // Highlight temporal
-            setTimeout(() => el.style.backgroundColor = 'transparent', 1500);
-        }
-    };
+        // Typing
+        const typers = new Set();
+        socket.on('user typing', d => {
+            // Si el mensaje viene de mi, ignorar
+            if (d.user === myUsername) return;
+            // Si el contexto no coincide, ignorar
+            if (d.context !== chatContext.type) return;
+            // Si es DM, sólo mostrar si el user es el target
+            if (d.context === 'private' && d.user !== chatContext.target) return;
 
-    function cancelReply() {
-        currentReplyToId = null;
-        els.replyCtx.style.display = 'none';
-    }
-    els.closeReply.onclick = cancelReply;
+            typers.add(d.user);
+            els.typing.textContent = typers.size ? `${Array.from(typers).join(', ')} está escribiendo...` : '';
+            scrollToBottom();
+        });
+        
+        socket.on('user stop typing', d => {
+            typers.delete(d.user);
+            els.typing.textContent = typers.size ? `${Array.from(typers).join(', ')} está escribiendo...` : '';
+            if (typers.size === 0) {
+                 els.typing.textContent = '';
+            }
+        });
 
-    // --- SOCKET LISTENERS ---
-    socket.on('chat message', d => addMessage({...d, isPrivate: false}));
-    socket.on('private message', d => addMessage(d));
-    socket.on('system message', t => addMessage({type:'system', text:t}));
-    
-    // Nueva gestión del historial, ya sea global o privado
-    socket.on('chat history', d => {
-        // Filtro de contexto para evitar mezclar historiales
-        if ((d.type === 'private' && chatContext.type !== 'private') || 
-            (d.type === 'global' && chatContext.type !== 'global')) return;
-            
-        els.messages.innerHTML = '';
-        d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user || m.sender }));
-        els.messages.scrollTop = els.messages.scrollHeight; // Asegurar scroll al final tras carga de historial
-    });
-    
-    socket.on('message deleted', id => { const e = document.getElementById(`msg-${id}`); if(e) e.remove(); });
-    socket.on('chat cleared', () => els.messages.innerHTML = '');
+        // Lista de Usuarios
+        socket.on('update user list', users => {
+            // La lista de usuarios es la misma para el sidebar y el overlay
+            const userHtml = users.map(u => `
+                <li data-user="${u}" onclick="${u === myUsername ? '' : `switchContext('private', '${u}')`}">
+                    ${u} 
+                    ${u === myUsername ? '<span style="font-size:0.8rem; float:right; color:var(--green);">🟢 Yo</span>' : 
+                                         '<span style="font-size:0.8rem; float:right; color:var(--accent);">💬 DM</span>'}
+                </li>
+            `).join('');
 
-    // Typing
-    const typers = new Set();
-    socket.on('user typing', d => {
-        if (d.context !== chatContext.type) return;
-        if (d.context === 'private' && d.user !== chatContext.target) return;
-        typers.add(d.user);
-        els.typing.textContent = typers.size ? `${Array.from(typers).filter(u => u !== myUsername).join(', ')} está escribiendo...` : '';
-    });
-    socket.on('user stop typing', d => {
-        typers.delete(d.user);
-        els.typing.textContent = typers.size ? `${Array.from(typers).filter(u => u !== myUsername).join(', ')} está escribiendo...` : '';
-    });
+            els.userListUl.innerHTML = userHtml;
+            els.userListUlOverlay.innerHTML = userHtml;
+            updateUserListHighlight();
+        });
+        
+        // --- 5. INITIAL CONNECTION / RECONNECT LOGIC ---
+        socket.on('connect', () => {
+            // Si el usuario ya se había logeado (ej. tras reconexión), intentar login de nuevo
+            if (myUsername) {
+                socket.emit('login', myUsername, (success) => {
+                    if (success) {
+                        console.log('Reconexión exitosa.');
+                        // Volver a cargar el historial del contexto actual
+                        if (chatContext.type === 'global') {
+                            socket.emit('get global history');
+                        } else {
+                            socket.emit('get private history', chatContext.target);
+                        }
+                    }
+                });
+            }
+        });
 
-    // Users List (Sidebar/Overlay)
-    socket.on('update user list', users => {
-        els.userListUl.innerHTML = users.map(u => `
-            <li data-user="${u}" onclick="${u === myUsername ? '' : `switchContext('private', '${u}')`}">
-                ${u} ${u !== myUsername ? '<span style="font-size:0.8rem; float:right; color:var(--accent);">💬 DM</span>' : '(Tú)'}
-            </li>
-        `).join('');
-    });
-
-    // Control de visibilidad de la "Sidebar" (Overlay)
-    els.toggleUsers.onclick = () => els.userListOverlay.classList.add('visible');
-    els.closeUsers.onclick = () => els.userListOverlay.classList.remove('visible');
-    els.userListOverlay.onclick = (e) => { if(e.target===els.userListOverlay) els.userListOverlay.classList.remove('visible'); };
-
-    // Simular el evento para pedir historial global al recargar
-    socket.on('connect', () => {
-        if (myUsername && chatContext.type === 'global') {
-            socket.emit('get global history');
-        }
-    });
-
-  </script>
+    </script>
 </body>
 </html>
