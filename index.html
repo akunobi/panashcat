@@ -138,9 +138,9 @@
 
     #messages { 
       list-style-type: none; margin: 0; padding: 2rem; 
-      overflow-y: auto; 
+      overflow-y: auto; /* CRÍTICO: Permite el scroll */
       display: flex; flex-direction: column; gap: 1.5rem;
-      height: 100%; 
+      height: 100%; /* CRÍTICO: Ocupa el espacio disponible */
     }
     
     #messages li { 
@@ -327,7 +327,8 @@
     let chatContext = { type: 'global', target: null }; // 'global' | 'private'
 
     // --- UTILS ---
-    const getAvatar = u => `/images/${u}.${u === 'Alvaro' ? 'png' : 'jpg'}`; // Corregido: Asume Alvaro.png y el resto son .jpg
+    // CRÍTICO: Usa 'Alvaro' y asume el path '/images/'
+    const getAvatar = u => `/images/${u}.${u === 'Alvaro' ? 'png' : 'jpg'}`; 
     const fmtTime = ts => new Date(ts * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     const escapeHTML = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
@@ -483,7 +484,14 @@
                     replyUser = repliedMsgEl.dataset.user;
                     const bubble = repliedMsgEl.querySelector('.message-bubble');
                     if (bubble) {
-                         const innerText = bubble.innerText.replace(replyUser, '').replace(/\d{2}:\d{2}/, '').trim();
+                         // Evita mostrar username y timestamp en el quote
+                         let innerText = bubble.textContent.trim();
+                         // Filtra el texto del username-label (si existe) y el timestamp
+                         const usernameLabel = repliedMsgEl.querySelector('.username-label');
+                         if(usernameLabel) innerText = innerText.replace(usernameLabel.textContent, '').trim();
+                         const timestamp = repliedMsgEl.querySelector('.timestamp');
+                         if(timestamp) innerText = innerText.replace(timestamp.textContent, '').trim();
+
                          replyText = repliedMsgEl.querySelector('img:not(.avatar)') ? 'Imagen' : innerText.substring(0, 30) + (innerText.length > 30 ? '...' : '');
                     }
                 }
@@ -522,6 +530,7 @@
             `;
         }
         els.messages.appendChild(li);
+        // CRÍTICO: Asegura el scroll al final
         els.messages.scrollTop = els.messages.scrollHeight;
     }
 
@@ -555,7 +564,12 @@
                 if (img) {
                     text = "Imagen";
                 } else {
-                    let innerText = bubble.textContent.replace(user, '').replace(/\d{2}:\d{2}/, '').trim();
+                    let innerText = bubble.textContent.trim();
+                    const usernameLabel = el.querySelector('.username-label');
+                    if(usernameLabel) innerText = innerText.replace(usernameLabel.textContent, '').trim();
+                    const timestamp = el.querySelector('.timestamp');
+                    if(timestamp) innerText = innerText.replace(timestamp.textContent, '').trim();
+                    
                     text = innerText.substring(0, 30) + (innerText.length > 30 ? '...' : '');
                 }
              }
@@ -587,13 +601,10 @@
     
     // Nueva gestión del historial, ya sea global o privado
     socket.on('chat history', d => {
-        // Si estamos en global y recibimos privado, o viceversa, ignorar
+        // Filtro de contexto para evitar mezclar historiales
         if ((d.type === 'private' && chatContext.type !== 'private') || 
             (d.type === 'global' && chatContext.type !== 'global')) return;
             
-        // Si es privado, asegurar que es el chat correcto
-        if (d.type === 'private' && d.target !== chatContext.target) return;
-        
         els.messages.innerHTML = '';
         d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user || m.sender }));
         els.messages.scrollTop = els.messages.scrollHeight; // Asegurar scroll al final tras carga de historial
@@ -606,16 +617,16 @@
     const typers = new Set();
     socket.on('user typing', d => {
         if (d.context !== chatContext.type) return;
-        if (d.context === 'private' && d.user !== chatContext.target && d.user !== myUsername) return;
+        if (d.context === 'private' && d.user !== chatContext.target) return;
         typers.add(d.user);
-        els.typing.textContent = typers.size ? `${Array.from(typers).join(', ')} está escribiendo...` : '';
+        els.typing.textContent = typers.size ? `${Array.from(typers).filter(u => u !== myUsername).join(', ')} está escribiendo...` : '';
     });
     socket.on('user stop typing', d => {
         typers.delete(d.user);
-        els.typing.textContent = '';
+        els.typing.textContent = typers.size ? `${Array.from(typers).filter(u => u !== myUsername).join(', ')} está escribiendo...` : '';
     });
 
-    // Users List
+    // Users List (Sidebar/Overlay)
     socket.on('update user list', users => {
         els.userListUl.innerHTML = users.map(u => `
             <li data-user="${u}" onclick="${u === myUsername ? '' : `switchContext('private', '${u}')`}">

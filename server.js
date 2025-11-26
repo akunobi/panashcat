@@ -17,7 +17,6 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000; 
 
 // ---- Listas de usuarios ----
-// *** CORRECCIÓN: Usamos 'Alvaro' sin tilde para evitar problemas de rutas y codificación. ***
 const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Alvaro'];
 const onlineUsers = new Set();
 
@@ -29,6 +28,10 @@ const db = new Pool({
   }
 });
 
+/**
+ * Función que configura las tablas de la base de datos.
+ * @returns {Promise<void>} Una promesa que se resuelve al terminar.
+ */
 async function setupDatabase() {
   try {
     console.log('Conectando a la base de datos PostgreSQL...');
@@ -66,16 +69,34 @@ async function setupDatabase() {
     console.log('Base de datos lista.');
   } catch (err) {
     console.error('Error al configurar la base de datos:', err);
+    throw err; // CRÍTICO: Lanzar error para detener el arranque del servidor.
   }
 }
-setupDatabase();
 
 // ---- Servir Archivos ----
-// *** CRUCIAL: Asegura que los archivos de la carpeta 'images' sean accesibles por el navegador ***
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+/**
+ * Carga el historial de mensajes globales y lo envía al socket.
+ * (Soluciona Error 3 y 4)
+ * @param {object} socket El objeto socket de la conexión actual.
+ */
+async function loadGlobalHistory(socket) {
+    try {
+        const history = await db.query(
+            `SELECT id, user_name AS "user", text, timestamp, reply_to_id, message_type AS "type"
+             FROM messages 
+             ORDER BY timestamp ASC LIMIT 100`
+        );
+        socket.emit('chat history', { type: 'global', messages: history.rows });
+    } catch (e) {
+        console.error('Error al consultar la DB:', e);
+    }
+}
+
 
 // ---- Lógica del Chat (Socket.IO) ----
 io.on('connection', (socket) => {
@@ -95,17 +116,8 @@ io.on('connection', (socket) => {
       io.emit('update user list', Array.from(onlineUsers));
       socket.broadcast.emit('system message', `${username} se ha unido.`);
 
-      // Cargar historial GLOBAL por defecto
-      try {
-        const history = await db.query(
-          `SELECT id, user_name AS "user", text, timestamp, reply_to_id, message_type AS "type"
-           FROM messages 
-           ORDER BY timestamp ASC LIMIT 100`
-        );
-        socket.emit('chat history', { type: 'global', messages: history.rows });
-      } catch (e) {
-        console.error('Error al consultar la DB:', e);
-      }
+      // Cargar historial GLOBAL (usando la nueva función reusable)
+      loadGlobalHistory(socket);
       
     } else {
       callback(false);
@@ -146,10 +158,16 @@ io.on('connection', (socket) => {
     }
   });
 
+  // (Soluciona Error 4: Agrega listener para recargar el historial global)
+  socket.on('get global history', () => {
+      loadGlobalHistory(socket);
+  });
+
   // 4. Mensajes Privados (DM)
   socket.on('private message', async (recipient, content, replyToId, type = 'text') => {
     if (!socket.username) return;
-    const timestamp = Math.floor(Date.now() / 1000);
+    // Soluciona Error 1: Cálculo del timestamp
+    const timestamp = Math.floor(Date.now() / 1000); 
     
     try {
       const result = await db.query(
@@ -198,7 +216,8 @@ io.on('connection', (socket) => {
     if (target === 'global') {
         socket.broadcast.emit('user typing', { user: socket.username, context: 'global' });
     } else {
-        io.to(target).emit('user typing', { user: socket.username, context: 'private' });
+        // Soluciona Error 6: Usamos socket.to(target).emit para no enviarlo a sí mismo (sender)
+        socket.to(target).emit('user typing', { user: socket.username, context: 'private' });
     }
   });
 
@@ -207,7 +226,8 @@ io.on('connection', (socket) => {
     if (target === 'global') {
         socket.broadcast.emit('user stop typing', { user: socket.username, context: 'global' });
     } else {
-        io.to(target).emit('user stop typing', { user: socket.username, context: 'private' });
+        // Soluciona Error 6: Usamos socket.to(target).emit para no enviarlo a sí mismo (sender)
+        socket.to(target).emit('user stop typing', { user: socket.username, context: 'private' });
     }
   });
 
@@ -243,11 +263,19 @@ io.on('connection', (socket) => {
     if (socket.username) {
       onlineUsers.delete(socket.username);
       io.emit('update user list', Array.from(onlineUsers));
+      // Soluciona Error 5: Mensaje de desconexión
+      socket.broadcast.emit('system message', `${socket.username} se ha desconectado.`);
     }
   });
 });
 
-// ---- Iniciar el servidor ----
-server.listen(PORT, () => {
-  console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
+// ---- Iniciar el servidor (Soluciona Error 2: Espera a que la DB se configure) ----
+setupDatabase().then(() => {
+  server.listen(PORT, () => {
+    console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
+  });
+}).catch(err => {
+  console.error('❌ CRITICAL: Database setup failed. Server is not running.');
+  // Opcional: Terminar el proceso si la configuración de la DB falla críticamente
+  // process.exit(1); 
 });
