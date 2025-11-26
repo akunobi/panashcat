@@ -1,0 +1,9 @@
+# Dependencias de Node
+node_modules/
+
+# Base de datos local
+chat.db
+
+# (Y cualquier otra línea útil que estuviera ahí)
+.DS_Store
+npm-debug.log
