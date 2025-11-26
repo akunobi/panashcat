@@ -2,45 +2,42 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>DRACULA CHAT // FIXED</title>
+  <title>DRACULA CHAT // LOGIN FIXED</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* --- PALETA DRÁCULA --- */
-      --dracula-bg: #282a36; 
-      --dracula-fg: #f8f8f2; 
-      --dracula-selection: #44475a;  
-      --dracula-comment: #6272a4;    
-      --purple: #bd93f9;    
-      --green: #50fa7b;     
-      --red: #ff5555;      
+      /* Dracula Palette */
+      --bg-dark: #282a36;
+      --bg-panel: #44475a;
+      --bg-sidebar: #21222c;
+      --fg: #f8f8f2;
+      --comment: #6272a4;
+      --purple: #bd93f9;
+      --green: #50fa7b;
+      --red: #ff5555;
       --yellow: #f1fa8c;
       --cyan: #8be9fd;
-
-      /* Variables de estructura */
-      --bg-sidebar: #21222c;
-      --bg-panel: var(--dracula-selection);
     }
 
     * { box-sizing: border-box; }
     
     body {
       margin: 0; padding: 0;
-      background-color: var(--dracula-bg);
-      color: var(--dracula-fg);
+      background-color: var(--bg-dark);
+      color: var(--fg);
       font-family: 'Inter', sans-serif;
       height: 100vh; width: 100vw;
-      overflow: hidden; /* IMPORTANTE: Previene scroll del body completo */
+      overflow: hidden;
       display: flex;
     }
 
-    /* === LAYOUT PRINCIPAL (GRID) === */
+    /* === LAYOUT PRINCIPAL === */
     #app-layout {
       width: 100%; height: 100%;
       display: grid;
-      grid-template-columns: 260px 1fr; /* Sidebar | Chat */
-      background: var(--dracula-bg);
+      grid-template-columns: 260px 1fr;
+      background: var(--bg-dark);
     }
     
     /* === SIDEBAR === */
@@ -54,7 +51,7 @@
     }
 
     .section-title {
-        font-size: 0.7rem; color: var(--dracula-comment); 
+        font-size: 0.7rem; color: var(--comment); 
         text-transform: uppercase; font-weight: bold;
         margin: 1.5rem 0 0.5rem 0;
         letter-spacing: 1px;
@@ -70,21 +67,19 @@
     .nav-item:hover { background: var(--bg-panel); color: #fff; }
     .nav-item.active { background: var(--bg-panel); color: var(--purple); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     
-    .nav-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--dracula-comment); }
+    .nav-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--comment); }
     .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 5px var(--green); }
     .unread-badge { margin-left: auto; background: var(--red); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: none; }
 
-    /* === CHAT CONTAINER (FLEX FIX) === */
-    /* Solución definitiva al bug de scroll e input oculto */
+    /* === CHAT CONTAINER === */
     .chat-container {
       display: flex; flex-direction: column;
       height: 100%;
       position: relative;
-      background: var(--dracula-bg);
-      min-width: 0; /* Previene desbordamiento en hijos flex */
+      background: var(--bg-dark);
+      min-width: 0; /* Previene overflow en flex children */
     }
 
-    /* Header (Fijo) */
     header {
       height: 60px; flex-shrink: 0;
       border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -93,11 +88,11 @@
     }
     #mobile-menu { display: none; background: none; border: none; color: white; font-size: 1.5rem; margin-right: 15px; cursor: pointer; }
 
-    /* Wrapper de Mensajes (Scrollable) */
+    /* Wrapper de mensajes */
     #messages-wrapper {
-      flex-grow: 1; /* Ocupa todo el espacio disponible */
-      overflow-y: auto; /* El scroll ocurre SOLO aquí */
-      min-height: 0; /* Corrección crítica para Firefox/Chrome */
+      flex-grow: 1; 
+      overflow-y: auto; 
+      min-height: 0; 
       padding: 20px;
       display: flex; flex-direction: column;
       scroll-behavior: smooth;
@@ -106,7 +101,7 @@
     #messages-list {
       display: flex; flex-direction: column; gap: 16px;
       margin: 0; padding: 0; list-style: none;
-      margin-top: auto; /* Empuja mensajes hacia abajo si hay pocos */
+      margin-top: auto; 
     }
 
     /* Estilos Mensajes */
@@ -125,7 +120,7 @@
         font-size: 0.95rem;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .msg-row.other .msg-bubble { background: var(--bg-panel); border-bottom-left-radius: 4px; color: var(--dracula-fg); }
+    .msg-row.other .msg-bubble { background: var(--bg-panel); border-bottom-left-radius: 4px; color: var(--fg); }
     .msg-row.me .msg-bubble { background: var(--purple); color: #282a36; border-bottom-right-radius: 4px; font-weight: 600; }
     
     .msg-user { font-size: 0.75rem; color: var(--purple); margin-bottom: 4px; display: block; font-weight: bold; letter-spacing: 0.5px; }
@@ -138,12 +133,12 @@
     
     @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
 
-    /* Input Container (Fijo abajo) */
+    /* Input Container */
     .input-container {
-      flex-shrink: 0; /* Asegura que nunca se encoja ni desaparezca */
+      flex-shrink: 0;
       padding: 15px 20px;
       border-top: 1px solid rgba(255,255,255,0.1);
-      background: var(--dracula-bg);
+      background: var(--bg-dark);
       z-index: 10;
     }
 
@@ -174,10 +169,10 @@
     .icon-btn:hover { opacity: 0.8; transform: scale(1.1); }
     .send-btn { background: var(--purple); color: #282a36; border-radius: 50%; width: 48px; height: 48px; justify-content: center; }
 
-    /* Login Overlay */
+    /* --- PANTALLA DE LOGIN --- */
     #login-screen {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: var(--dracula-bg); z-index: 100;
+        background: var(--bg-dark); z-index: 100;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
     .profiles-grid { display: flex; gap: 30px; margin-top: 2rem; flex-wrap: wrap; justify-content: center; }
@@ -198,7 +193,7 @@
 
   <div id="login-screen">
       <h1 style="color:var(--purple); margin:0; font-size: 2.5rem; letter-spacing: 2px;">DRACULA CHAT</h1>
-      <p style="color:var(--dracula-comment); margin-top: 10px;">Selecciona tu identidad</p>
+      <p style="color:var(--comment); margin-top: 10px;">Selecciona tu usuario</p>
       <div class="profiles-grid">
           <div class="profile-item" onclick="login('Rafa')">
               <img src="/images/Rafa.png" onerror="this.src='https://ui-avatars.com/api/?name=Rafa&background=bd93f9&color=fff'" class="profile-img">
@@ -244,7 +239,7 @@
     <main class="chat-container">
         <header>
             <button id="mobile-menu">☰</button>
-            <span id="header-icon" style="color:var(--dracula-comment); font-family:'Fira Code'; margin-right:10px;">#</span>
+            <span id="header-icon" style="color:var(--comment); font-family:'Fira Code'; margin-right:10px;">#</span>
             <h3 id="chat-title" style="margin:0; letter-spacing: 1px;">GLOBAL</h3>
             <span id="typing" style="margin-left:15px; font-size:0.75rem; color:var(--yellow); font-style:italic;"></span>
         </header>
@@ -282,7 +277,6 @@
     let unread = {};
     let typingTimer;
 
-    // Elementos DOM
     const els = {
         login: document.getElementById('login-screen'),
         sidebar: document.getElementById('sidebar'),
@@ -299,37 +293,35 @@
         btnGlobal: document.getElementById('btn-global')
     };
 
-    // --- 1. LOGIN (Corrección con Callback) ---
+    // --- 1. LOGIN (CORE FIX) ---
     window.login = (user) => {
-        // Solicitamos login y esperamos confirmación
-        socket.emit('login', user, (response) => {
-            if(response && response.status === 'ok') {
-                myUser = user;
-                document.getElementById('my-name').textContent = user;
-                
-                // Configurar avatar con fallback
-                const avatarUrl = `/images/${user}.png`;
-                const imgEl = document.getElementById('my-avatar');
-                imgEl.src = avatarUrl;
-                imgEl.onerror = function() {
-                    this.src = `https://ui-avatars.com/api/?name=${user}&background=bd93f9&color=fff`;
-                };
-
-                els.login.style.display = 'none';
-                changeChat('global'); // Arrancar siempre en Global
-            }
-        });
+        console.log("Intentando login con:", user);
+        // Enviamos el evento de login
+        socket.emit('login', user);
     };
+
+    // ESCUCHAMOS EL ÉXITO DEL LOGIN
+    socket.on('login success', (user) => {
+        myUser = user;
+        document.getElementById('my-name').textContent = user;
+        
+        const imgEl = document.getElementById('my-avatar');
+        imgEl.src = `/images/${user}.png`;
+        imgEl.onerror = function() {
+            this.src = `https://ui-avatars.com/api/?name=${user}&background=bd93f9&color=fff`;
+        };
+
+        els.login.style.display = 'none';
+        changeChat('global'); // Arrancar siempre en Global
+    });
 
     // --- 2. CAMBIO DE CHAT ---
     window.changeChat = (target) => {
         activeChat = target;
         
-        // Limpiar UI
         els.msgList.innerHTML = ''; 
         cancelReply();
         
-        // Actualizar Sidebar
         els.btnGlobal.classList.toggle('active', target === 'global');
         document.querySelectorAll('.nav-item[data-user]').forEach(el => {
             const isTarget = el.dataset.user === target;
@@ -341,7 +333,6 @@
             }
         });
 
-        // Actualizar Header y Pedir Historial
         if(target === 'global') {
             els.chatTitle.textContent = 'GLOBAL';
             els.headerIcon.textContent = '#';
@@ -352,11 +343,10 @@
             socket.emit('join chat', { target: target, type: 'private' });
         }
 
-        // Móvil
         if(window.innerWidth < 768) els.sidebar.classList.remove('open');
     };
 
-    // --- 3. LISTA DE USUARIOS ---
+    // --- 3. LISTA USUARIOS ---
     socket.on('update user list', (users) => {
         const others = users.filter(u => u !== myUser);
         els.dmList.innerHTML = others.map(u => {
@@ -389,21 +379,20 @@
 
     // --- 5. RECIBIR ---
     socket.on('chat message', (msg) => {
-        let shouldRender = false;
+        let show = false;
         
         if (msg.isPrivate) {
             const partner = (msg.user === myUser) ? msg.receiver : msg.user;
-            if (activeChat === partner) {
-                shouldRender = true;
-            } else if (msg.user !== myUser) {
+            if (activeChat === partner) show = true;
+            else if (msg.user !== myUser) {
                 unread[partner] = (unread[partner] || 0) + 1;
                 updateBadge(partner);
             }
         } else {
-            if (activeChat === 'global') shouldRender = true;
+            if (activeChat === 'global') show = true;
         }
 
-        if (shouldRender) {
+        if (show) {
             renderMessage(msg);
             scrollToBottom();
         }
@@ -417,7 +406,7 @@
         }
     });
 
-    // --- 6. RENDERIZADO ---
+    // --- RENDERIZADO ---
     function renderMessage(msg) {
         const li = document.createElement('li');
         const isMe = msg.user === myUser;
@@ -455,7 +444,7 @@
 
     // --- UTILS ---
     function scrollToBottom() { els.msgWrapper.scrollTop = els.msgWrapper.scrollHeight; }
-
+    
     function updateBadge(user) {
         const item = document.querySelector(`.nav-item[data-user="${user}"]`);
         if(item) {

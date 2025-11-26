@@ -8,8 +8,7 @@ const { Pool } = require('pg');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { 
-  // Aumentar límite para imágenes grandes (50MB)
-  maxHttpBufferSize: 50 * 1024 * 1024, 
+  maxHttpBufferSize: 50 * 1024 * 1024, // 50MB
   transports: ['websocket'], 
   upgrade: false 
 });
@@ -18,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 // ---- Estado ----
 const onlineUsers = new Set();
 
-// ---- Configuración de Base de Datos (PostgreSQL) ----
+// ---- Base de Datos ----
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -26,9 +25,9 @@ const db = new Pool({
 
 async function setupDatabase() {
   try {
-    console.log('--- Iniciando configuración de Base de Datos ---');
+    console.log('--- Configurando Base de Datos ---');
     
-    // 1. Tabla mensajes globales
+    // 1. Tabla Global
     await db.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -40,7 +39,7 @@ async function setupDatabase() {
       );
     `);
 
-    // 2. Tabla Mensajes Privados
+    // 2. Tabla Privada
     await db.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
         id SERIAL PRIMARY KEY,
@@ -53,66 +52,57 @@ async function setupDatabase() {
       );
     `);
     
-    // Parches de compatibilidad por si la tabla ya existía sin la columna tipo
+    // Parches de compatibilidad
     try { await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`); } catch(e){}
     try { await db.query(`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`); } catch(e){}
 
-    console.log('✅ Base de datos configurada y lista.');
+    console.log('✅ Base de datos lista.');
   } catch (err) {
-    console.error('❌ Error fatal en DB:', err);
+    console.error('❌ Error DB:', err);
   }
 }
 setupDatabase();
 
 // Servir archivos estáticos
 app.use('/images', express.static(path.join(__dirname, 'images')));
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-// ---- Lógica del Chat (Socket.IO) ----
+// ---- Lógica Sockets ----
 io.on('connection', (socket) => {
-  console.log(`Cliente conectado ID: ${socket.id}`);
+  console.log(`Cliente conectado: ${socket.id}`);
 
-  // 1. LOGIN
-  // Usamos un callback para confirmar al cliente que el login fue exitoso
-  socket.on('login', (username, callback) => {
+  // 1. LOGIN (MÉTODO ROBUSTO SIN CALLBACKS)
+  socket.on('login', (username) => {
     if (!username) return;
 
     socket.username = username;
+    
+    // Unir a sala propia
+    socket.join(username);
     onlineUsers.add(username);
     
-    // Unir al usuario a una sala con su propio nombre (para recibir DMs)
-    socket.join(username);
-
-    // Confirmar al cliente
-    if (typeof callback === 'function') {
-        callback({ status: 'ok', username: username });
-    }
+    // ENVIAR EVENTO DE ÉXITO AL CLIENTE
+    socket.emit('login success', username);
     
-    // Notificar a todos
+    // Avisar a los demás
     io.emit('update user list', Array.from(onlineUsers));
-    io.emit('system message', `${username} se ha unido.`);
+    io.emit('system message', `${username} ha entrado.`);
   });
 
   // 2. UNIRSE A CHAT / PEDIR HISTORIAL
   socket.on('join chat', async ({ target, type }) => {
     if (!socket.username) return;
-
-    // Límite de tiempo (2 semanas)
-    const timeLimit = Math.floor(Date.now() / 1000) - 1209600;
+    const timeLimit = Math.floor(Date.now() / 1000) - 1209600; // 2 semanas
     
     try {
         let messages = [];
 
         if (type === 'global') {
-            // --- Historial GLOBAL ---
+            // Historial Global
             const res = await db.query(
                 `SELECT * FROM messages WHERE timestamp > $1 ORDER BY id ASC`, 
                 [timeLimit]
             );
-            
-            // Mapeamos los datos para el frontend
             messages = res.rows.map(row => ({
                 id: row.id,
                 user: row.user_name,
@@ -124,8 +114,7 @@ io.on('connection', (socket) => {
             }));
 
         } else if (type === 'private') {
-            // --- Historial PRIVADO ---
-            // Mensajes donde YO soy emisor O receptor con el TARGET
+            // Historial Privado
             const res = await db.query(
                 `SELECT * FROM direct_messages 
                  WHERE timestamp > $1 
@@ -133,10 +122,9 @@ io.on('connection', (socket) => {
                  ORDER BY id ASC`,
                 [timeLimit, socket.username, target]
             );
-
             messages = res.rows.map(row => ({
                 id: row.id,
-                user: row.sender, 
+                user: row.sender,
                 text: row.text,
                 timestamp: row.timestamp,
                 reply_to_id: row.reply_to_id,
@@ -146,61 +134,42 @@ io.on('connection', (socket) => {
             }));
         }
         
-        // Enviamos historial y contexto
         socket.emit('chat history', { messages, context: target || 'global' });
 
-    } catch (err) {
-        console.error("Error recuperando historial:", err);
-    }
+    } catch (err) { console.error(err); }
   });
 
-  // 3. ENVIAR MENSAJE DE TEXTO
+  // 3. ENVIAR MENSAJE (Texto)
   socket.on('chat message', async (text, replyToId, targetUser) => {
     if (!socket.username) return;
     const ts = Math.floor(Date.now() / 1000);
 
     try {
         if (targetUser && targetUser !== 'global') {
-            // --- MENSAJE PRIVADO ---
+            // Privado
             const res = await db.query(
                 `INSERT INTO direct_messages (sender, receiver, text, timestamp, reply_to_id, message_type) VALUES ($1, $2, $3, $4, $5, 'text') RETURNING id`,
                 [socket.username, targetUser, text, ts, replyToId]
             );
-            
-            const packet = { 
-                id: res.rows[0].id, 
-                user: socket.username, 
-                text, timestamp: ts, reply_to_id: replyToId, 
-                type: 'text', isPrivate: true, receiver: targetUser 
-            };
-            
-            // Enviar a las salas de ambos usuarios
+            const packet = { id: res.rows[0].id, user: socket.username, text, timestamp: ts, reply_to_id: replyToId, type: 'text', isPrivate: true, receiver: targetUser };
             io.to(socket.username).to(targetUser).emit('chat message', packet);
 
         } else {
-            // --- MENSAJE GLOBAL ---
+            // Global
             const res = await db.query(
                 `INSERT INTO messages (user_name, text, timestamp, reply_to_id, message_type) VALUES ($1, $2, $3, $4, 'text') RETURNING id`,
                 [socket.username, text, ts, replyToId]
             );
-            
-            const packet = { 
-                id: res.rows[0].id, 
-                user: socket.username, 
-                text, timestamp: ts, reply_to_id: replyToId, 
-                type: 'text', isPrivate: false 
-            };
-            
+            const packet = { id: res.rows[0].id, user: socket.username, text, timestamp: ts, reply_to_id: replyToId, type: 'text', isPrivate: false };
             io.emit('chat message', packet);
         }
-    } catch(e) { console.error("Error guardando mensaje:", e); }
+    } catch(e) { console.error(e); }
   });
 
   // 4. ENVIAR IMAGEN
   socket.on('chat image', async (imgData, replyToId, targetUser) => {
     if (!socket.username) return;
     const ts = Math.floor(Date.now() / 1000);
-
     try {
         if (targetUser && targetUser !== 'global') {
              // Privado
@@ -219,28 +188,25 @@ io.on('connection', (socket) => {
              const packet = { id: res.rows[0].id, user: socket.username, text: imgData, timestamp: ts, reply_to_id: replyToId, type: 'image', isPrivate: false };
              io.emit('chat message', packet);
         }
-    } catch(e) { console.error("Error guardando imagen:", e); }
+    } catch(e) { console.error(e); }
   });
 
   // 5. BORRAR MENSAJE
   socket.on('delete message', async (id) => {
-      if(!socket.username) return;
       try {
         await db.query(`DELETE FROM messages WHERE id=$1 AND user_name=$2`, [id, socket.username]);
         await db.query(`DELETE FROM direct_messages WHERE id=$1 AND sender=$2`, [id, socket.username]);
         io.emit('message deleted', id);
-      } catch(e) { console.error(e); }
+      } catch(e) {}
   });
 
-  // 6. LIMPIAR CHAT (Solo global)
+  // 6. LIMPIAR (Solo global)
   socket.on('clear chat request', async () => {
       if(!socket.username) return;
       await db.query('DELETE FROM messages');
       io.emit('chat cleared');
-      io.emit('system message', `${socket.username} ha limpiado el chat global.`);
   });
 
-  // 7. EVENTOS VARIOS
   socket.on('typing', () => socket.broadcast.emit('user typing', socket.username));
   socket.on('stop typing', () => socket.broadcast.emit('user stop typing', socket.username));
   
@@ -248,11 +214,8 @@ io.on('connection', (socket) => {
     if (socket.username) {
         onlineUsers.delete(socket.username);
         io.emit('update user list', Array.from(onlineUsers));
-        io.emit('system message', `${socket.username} ha salido.`);
     }
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`🚀 Servidor funcionando en puerto ${PORT}`);
-});
+server.listen(PORT, () => console.log(`🚀 Server OK en puerto ${PORT}`));
