@@ -111,7 +111,7 @@
     }
     #chat-header-left { display: flex; align-items: center; gap: 1rem; }
     #chat-header h2 { margin: 0; font-size: 1.1rem; font-weight: 500; color: var(--text-secondary); }
-    #chat-header h2 span { color: var(--accent-hover); font-weight: 700; text-transform: uppercase; }
+    #chat-header h2 span { color: var(--accent-hover); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
     
     /* Botón Volver (oculto por defecto) */
     #back-to-global {
@@ -217,10 +217,10 @@
     .spoiler { background: var(--dracula-comment); color: transparent; cursor: pointer; border-radius: 4px; }
     .spoiler.revealed { background: rgba(255,255,255,0.1); color: inherit; }
 
-    /* Lista Usuarios */
+    /* Lista Usuarios (Overlay - La "Sidebar" flotante) */
     #user-list-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(5px); }
     #user-list-overlay.visible { display: flex; }
-    #user-list-box { background: var(--bg-panel); padding: 2rem; border-radius: 24px; width: 350px; border: 1px solid var(--accent); position: relative; }
+    #user-list-box { background: var(--bg-panel); padding: 2rem; border-radius: 24px; width: 350px; border: 1px solid var(--accent); position: relative; max-height: 80%; overflow-y: auto; }
     #user-list-box h2 { color: var(--accent-hover); text-align: center; margin-top: 0; }
     #user-list-box .close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--red); cursor: pointer; font-size: 1.2rem; }
     #user-list-ul { list-style: none; padding: 0; }
@@ -228,7 +228,7 @@
     #user-list-ul li:hover { border-color: var(--accent-hover); background: rgba(139, 233, 253, 0.1); transform: translateX(5px); }
     #user-list-ul li[data-user="Hugo" i] { border-color: var(--green); }
     #user-list-ul li[data-user="Rafa" i] { border-color: var(--pink); }
-    #user-list-ul li[data-user="Álvaro" i] { border-color: var(--orange); }
+    #user-list-ul li[data-user="Alvaro" i] { border-color: var(--orange); }
     #user-list-ul li[data-user="Sergio" i] { border-color: var(--cyan); }
 
   </style>
@@ -242,10 +242,10 @@
         <h1>DRACULA CHAT</h1>
         <p>Identifícate:</p>
         <div id="login-profiles">
-          <div class="profile-card" data-username="Rafa"><img src="/images/Rafa.png"><div class="profile-name">Rafa</div></div>
-          <div class="profile-card" data-username="Hugo"><img src="/images/Hugo.png"><div class="profile-name">Hugo</div></div>
-          <div class="profile-card" data-username="Sergio"><img src="/images/Sergio.png"><div class="profile-name">Sergio</div></div>
-          <div class="profile-card" data-username="Álvaro"><img src="/images/Álvaro.png"><div class="profile-name">Álvaro</div></div>
+          <div class="profile-card" data-username="Rafa"><img src="/images/Rafa.jpg"><div class="profile-name">Rafa</div></div>
+          <div class="profile-card" data-username="Hugo"><img src="/images/Hugo.jpg"><div class="profile-name">Hugo</div></div>
+          <div class="profile-card" data-username="Sergio"><img src="/images/Sergio.jpg"><div class="profile-name">Sergio</div></div>
+          <div class="profile-card" data-username="Alvaro"><img src="/images/Alvaro.png"><div class="profile-name">Alvaro</div></div>
         </div>
         <p id="login-error">Error de acceso.</p>
       </div>
@@ -327,7 +327,7 @@
     let chatContext = { type: 'global', target: null }; // 'global' | 'private'
 
     // --- UTILS ---
-    const getAvatar = u => `/images/${u}.png`; // Asume PNG
+    const getAvatar = u => `/images/${u}.${u === 'Alvaro' ? 'png' : 'jpg'}`; // Corregido: Asume Alvaro.png y el resto son .jpg
     const fmtTime = ts => new Date(ts * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     const escapeHTML = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
@@ -350,13 +350,15 @@
             els.chanName.innerText = '# GLOBAL';
             els.chanName.style.color = 'var(--text-secondary)';
             els.backBtn.style.display = 'none';
-            window.location.reload(); // MVP: Recargar para historial global
+            // Volver a pedir el historial global
+            socket.emit('get global history'); 
         } else {
             els.chanName.innerText = `@ ${target}`;
             els.chanName.style.color = 'var(--green)';
             els.backBtn.style.display = 'inline-block';
             socket.emit('get private history', target);
         }
+        els.input.focus();
     }
     els.backBtn.onclick = () => switchContext('global');
 
@@ -414,12 +416,18 @@
 
     els.input.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); els.form.dispatchEvent(new Event('submit')); }
-        if (e.key === 'Escape') { if(currentReplyToId) cancelReply(); else if(els.userListOverlay.classList.contains('visible')) els.userListOverlay.classList.remove('visible'); }
+        if (e.key === 'Escape') { 
+            if(currentReplyToId) cancelReply(); 
+            else if(els.userListOverlay.classList.contains('visible')) els.userListOverlay.classList.remove('visible'); 
+        }
     });
 
     els.input.addEventListener('input', () => {
+        // Auto-ajustar altura
         els.input.style.height = 'auto';
         els.input.style.height = els.input.scrollHeight + 'px';
+        
+        // Indicador de escritura
         if (!isTyping) { 
             isTyping = true; 
             socket.emit('typing', chatContext.type === 'global' ? 'global' : chatContext.target);
@@ -466,7 +474,21 @@
             // Construcción de la burbuja
             let contentHtml = '';
             if (data.reply_to_id) {
-                contentHtml += `<div class="reply-quote" onclick="scrollToMsg(${data.reply_to_id})">↩ Respuesta</div>`;
+                // Obtenemos info del mensaje respondido para mostrar en el quote
+                const repliedMsgEl = document.getElementById(`msg-${data.reply_to_id}`);
+                let replyUser = 'Mensaje borrado';
+                let replyText = '...';
+
+                if (repliedMsgEl) {
+                    replyUser = repliedMsgEl.dataset.user;
+                    const bubble = repliedMsgEl.querySelector('.message-bubble');
+                    if (bubble) {
+                         const innerText = bubble.innerText.replace(replyUser, '').replace(/\d{2}:\d{2}/, '').trim();
+                         replyText = repliedMsgEl.querySelector('img:not(.avatar)') ? 'Imagen' : innerText.substring(0, 30) + (innerText.length > 30 ? '...' : '');
+                    }
+                }
+                
+                contentHtml += `<div class="reply-quote" onclick="scrollToMsg(${data.reply_to_id})">↩ Respondiendo a <strong>${replyUser}</strong>: ${replyText}</div>`;
             }
 
             if (!isMe) contentHtml += `<span class="username-label">${data.user}</span>`;
@@ -482,7 +504,7 @@
             // Acciones
             const actions = `
                 <div class="message-actions">
-                    <button class="action-btn reply-btn" data-id="${data.id}">↩</button>
+                    <button class="action-btn reply-btn" data-id="${data.id}" data-user="${data.user}">↩</button>
                     ${isMe ? `<button class="action-btn delete-btn" style="color:var(--red)" data-id="${data.id}">🗑</button>` : ''}
                 </div>
             `;
@@ -508,7 +530,7 @@
         const replyBtn = e.target.closest('.reply-btn');
         if (replyBtn) {
             const id = replyBtn.dataset.id;
-            const user = replyBtn.closest('li').classList.contains('me') ? myUsername : replyBtn.closest('li').querySelector('.username-label').innerText;
+            const user = replyBtn.dataset.user;
             initReply(id, user);
             return;
         }
@@ -525,12 +547,17 @@
         currentReplyToId = id;
         els.replyUser.textContent = user;
         const el = document.getElementById(`msg-${id}`);
-        let text = "Imagen";
+        let text = "Mensaje";
         if (el) {
              const bubble = el.querySelector('.message-bubble');
-             // Texto simple
-             if (bubble && !bubble.querySelector('img:not(.avatar)')) {
-                 text = bubble.innerText.replace(user, '').replace(/\d{2}:\d{2}/, '').trim().substring(0, 30) + '...';
+             if (bubble) {
+                const img = bubble.querySelector('img:not(.avatar)');
+                if (img) {
+                    text = "Imagen";
+                } else {
+                    let innerText = bubble.textContent.replace(user, '').replace(/\d{2}:\d{2}/, '').trim();
+                    text = innerText.substring(0, 30) + (innerText.length > 30 ? '...' : '');
+                }
              }
         }
         els.replyText.textContent = text;
@@ -542,8 +569,8 @@
         const el = document.getElementById(`msg-${id}`);
         if(el) {
             el.scrollIntoView({behavior: "smooth", block: "center"});
-            el.classList.add('highlight');
-            setTimeout(() => el.classList.remove('highlight'), 1500);
+            el.style.backgroundColor = 'rgba(189, 147, 249, 0.2)'; // Highlight temporal
+            setTimeout(() => el.style.backgroundColor = 'transparent', 1500);
         }
     };
 
@@ -558,10 +585,18 @@
     socket.on('private message', d => addMessage(d));
     socket.on('system message', t => addMessage({type:'system', text:t}));
     
+    // Nueva gestión del historial, ya sea global o privado
     socket.on('chat history', d => {
-        if (d.type === 'private' && chatContext.type === 'global') return;
+        // Si estamos en global y recibimos privado, o viceversa, ignorar
+        if ((d.type === 'private' && chatContext.type !== 'private') || 
+            (d.type === 'global' && chatContext.type !== 'global')) return;
+            
+        // Si es privado, asegurar que es el chat correcto
+        if (d.type === 'private' && d.target !== chatContext.target) return;
+        
         els.messages.innerHTML = '';
         d.messages.forEach(m => addMessage({ ...m, isPrivate: d.type === 'private', user: m.user || m.sender }));
+        els.messages.scrollTop = els.messages.scrollHeight; // Asegurar scroll al final tras carga de historial
     });
     
     socket.on('message deleted', id => { const e = document.getElementById(`msg-${id}`); if(e) e.remove(); });
@@ -571,7 +606,7 @@
     const typers = new Set();
     socket.on('user typing', d => {
         if (d.context !== chatContext.type) return;
-        if (d.context === 'private' && d.user !== chatContext.target) return;
+        if (d.context === 'private' && d.user !== chatContext.target && d.user !== myUsername) return;
         typers.add(d.user);
         els.typing.textContent = typers.size ? `${Array.from(typers).join(', ')} está escribiendo...` : '';
     });
@@ -583,15 +618,23 @@
     // Users List
     socket.on('update user list', users => {
         els.userListUl.innerHTML = users.map(u => `
-            <li onclick="${u === myUsername ? '' : `switchContext('private', '${u}')`}">
-                ${u} ${u !== myUsername ? '<span style="font-size:0.8rem; float:right; color:var(--accent);">💬 DM</span>' : ''}
+            <li data-user="${u}" onclick="${u === myUsername ? '' : `switchContext('private', '${u}')`}">
+                ${u} ${u !== myUsername ? '<span style="font-size:0.8rem; float:right; color:var(--accent);">💬 DM</span>' : '(Tú)'}
             </li>
         `).join('');
     });
 
+    // Control de visibilidad de la "Sidebar" (Overlay)
     els.toggleUsers.onclick = () => els.userListOverlay.classList.add('visible');
     els.closeUsers.onclick = () => els.userListOverlay.classList.remove('visible');
     els.userListOverlay.onclick = (e) => { if(e.target===els.userListOverlay) els.userListOverlay.classList.remove('visible'); };
+
+    // Simular el evento para pedir historial global al recargar
+    socket.on('connect', () => {
+        if (myUsername && chatContext.type === 'global') {
+            socket.emit('get global history');
+        }
+    });
 
   </script>
 </body>

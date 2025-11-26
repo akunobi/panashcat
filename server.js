@@ -17,7 +17,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000; 
 
 // ---- Listas de usuarios ----
-const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Álvaro'];
+// *** CORRECCIÓN: Usamos 'Alvaro' sin tilde para evitar problemas de rutas y codificación. ***
+const allowedUsers = ['Rafa', 'Hugo', 'Sergio', 'Alvaro'];
 const onlineUsers = new Set();
 
 // ---- Configuración de Base de Datos (PostgreSQL) ----
@@ -44,7 +45,7 @@ async function setupDatabase() {
       );
     `);
     
-    // 2. --- NUEVA TABLA: Mensajes Directos ---
+    // 2. Tabla Mensajes Directos
     await db.query(`
       CREATE TABLE IF NOT EXISTS direct_messages (
         id SERIAL PRIMARY KEY,
@@ -70,6 +71,7 @@ async function setupDatabase() {
 setupDatabase();
 
 // ---- Servir Archivos ----
+// *** CRUCIAL: Asegura que los archivos de la carpeta 'images' sean accesibles por el navegador ***
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -84,7 +86,7 @@ io.on('connection', (socket) => {
     if (allowedUsers.includes(username)) {
       socket.username = username;
       
-      // --- CAMBIO CLAVE: Unirse a sala personal para DMs ---
+      // Unirse a sala personal para DMs
       socket.join(username);
       
       callback(true);
@@ -100,7 +102,6 @@ io.on('connection', (socket) => {
            FROM messages 
            ORDER BY timestamp ASC LIMIT 100`
         );
-        // Enviamos con etiqueta 'global'
         socket.emit('chat history', { type: 'global', messages: history.rows });
       } catch (e) {
         console.error('Error al consultar la DB:', e);
@@ -145,7 +146,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // --- 4. NUEVO: Mensajes Privados (DM) ---
+  // 4. Mensajes Privados (DM)
   socket.on('private message', async (recipient, content, replyToId, type = 'text') => {
     if (!socket.username) return;
     const timestamp = Math.floor(Date.now() / 1000);
@@ -175,7 +176,7 @@ io.on('connection', (socket) => {
     } catch (e) { console.error('Error private msg:', e); }
   });
 
-  // --- 5. NUEVO: Historial Privado ---
+  // 5. Historial Privado
   socket.on('get private history', async (otherUser) => {
     if (!socket.username) return;
     try {
